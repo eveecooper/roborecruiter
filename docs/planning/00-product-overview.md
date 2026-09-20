@@ -1,4 +1,17 @@
+---
+doc: product-brief
+draft: 1
+status: superseded
+superseded_by: 01-engineering-plan.md
+authoritative_for: [product intent, goals, limitations, restrictions]
+---
+
 # Product
+
+> **Draft 1, superseded.** The original product brief, kept for product intent: goals,
+> limitations, and the restrictions the project accepts by design. Its engineering specifics are
+> stale - [the engineering plan](01-engineering-plan.md) is current, and the known conflicts are
+> listed in [Superseded points](#superseded-points) below.
 
 An assisted job application pipeline. It finds front-of-house restaurant openings near a chosen
 location, prepares the application materials, and hands the applicant the steps that require a
@@ -222,3 +235,23 @@ reading, attaches to that structure without changing it.
 4. Optional posting sources approved from the open questions above.
 5. Preference learning from logged gate decisions.
 6. Email reading that suggests response marks for confirmation.
+
+---
+
+## Superseded points
+
+Draft 2 ([the engineering plan](01-engineering-plan.md)) revisited these specifics. Where this
+document and draft 2 disagree, draft 2 is correct. This table is the complete list of *conflicts* -
+draft 2 also adds material this brief simply predates (style-profile versioning, fact-bank
+versioning, the source-identity split), which the precedence rule covers without listing.
+
+| This brief said | Draft 2 decided | Where in draft 2 |
+| --- | --- | --- |
+| Prefill in the first build, "basic fields if the schedule holds" | Browser prefill is post-M6 and exposes no submit operation | Decision 22 |
+| "Under 5 minutes per application" as a success target | A target that is measured and reported; overruns are recorded, not enforced | Budget semantics |
+| "A full scan of ZIP 94085 completes unattended" | Completes without intervention **or** produces an explicit review / dead-letter outcome | Success criteria |
+| "A daily cap limits how many applications a run may prepare" | `max_applications` is per-run; no daily cap exists | Selection and run budgets |
+
+The tech stack and "still being considered" tables here are near-duplicates of draft 2's
+equivalents and will keep diverging with each revision. They are retained because this is a
+historical record. Consult draft 2 for the current answer.
