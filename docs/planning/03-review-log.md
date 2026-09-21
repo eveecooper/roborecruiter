@@ -6,8 +6,9 @@ reviews: 01-engineering-plan.md
 
 # Review log
 
-> **History, not instruction.** Why draft 2 became draft 3: what changed in the engineering
-> plan, the reasoning, and what was deliberately left alone.
+> **History, not instruction.** What changed in the planning documents, the reasoning, and what
+> was deliberately left alone. Newest review last. Earlier entries are kept as written even where a
+> later review reversed them; the reversal is noted rather than the record edited.
 
 ## Review 1 - 2026-09-20
 
@@ -46,7 +47,7 @@ about Overture and the hiring platforms had moved since the plan was written.
 | P11 | M1 forbade a review UI while M2 listed a review list as a deliverable | Clarified: the M1 and M2 review list is a generated report file. The console arrives with Gate 1 in M4 |
 | P12 | Nothing said whether spike data survived M3 | M1 states spike persistence is throwaway by default. M3 records a re-import or discard decision |
 | P13 | A 2019 Google figure sat unlabelled in a 2026 document, and the Overture attribution obligation was missing | Figure marked as dated rather than replaced. Attribution obligation added, scoped to redistribution |
-| P14 | The draft lineage was nowhere stated, so a reader opening the product brief first would act on superseded commitments | Front matter on each document, a superseded-points table in draft 1, and the precedence rule in `CLAUDE.md` with the detail in `docs/agent/doc-precedence.md` |
+| P14 | The draft lineage was nowhere stated, so a reader opening the product brief first would act on superseded commitments | Front matter on each document, a superseded-points table in draft 1, and the precedence rule in `CLAUDE.md` with the detail in `docs/agent/doc-precedence.md`. **Superseded by Review 2**, which removed the conflicts instead of explaining them |
 
 Five decisions were added to the decision log (23 to 27) and three rows to open discussions.
 
@@ -76,6 +77,8 @@ M5 respectively.
 - **Draft 1's duplicated tech stack and open-questions tables.** They will keep diverging from
   draft 2's equivalents. They are retained because draft 1 is a historical record, and deleting
   content from a historical record defeats its purpose. Worth revisiting at the next revision.
+  **Revisited in Review 2 and removed:** once the product overview stopped being a historical
+  record and became a current document with its own scope, the duplicates had no reason to stay.
 - **The crawler identity question.** A custom user-agent raises block rates on WAF-protected sites,
   which feeds directly into M2's pass criteria. The tradeoff is real and was left to Investigation D
   rather than decided in passing.
@@ -94,3 +97,53 @@ A snapshot, not a live list - the root README carries the current status.
 - `basic_category_allow` is empty and must be filled from the pinned taxonomy release before M1.
 - A current-year extract of the county permit data has not been confirmed downloadable.
 - Investigations D and F are open now and block M2 and M5 wording respectively.
+
+---
+
+## Review 2 - 2026-09-20
+
+**Scope:** document structure. No engineering decision changed.
+
+**Problem.** Review 1 kept two planning documents that disagreed, and explained the disagreement
+with a precedence rule. The rule ended up restated in seven places, and every future revision would
+have widened the gap it described. A reader also had to know the draft history before they could
+trust either document.
+
+**What was actually wrong.** The two documents only conflicted on four points, all engineering
+specifics. Everything else in the product brief was material the engineering plan never covered.
+They were not competing drafts; they were two documents that had never been given clean boundaries.
+
+**Resolution.** Boundaries instead of precedence.
+
+- The product overview keeps product intent, limitations, and the restrictions accepted by design.
+- The engineering plan keeps everything operational.
+- Neither supersedes the other, so no precedence rule is needed and none is stated.
+
+**Eight requirements were stranded in the product brief** and had no home in the engineering plan.
+They were moved rather than lost:
+
+| Requirement | Now in |
+| --- | --- |
+| Source policy holds allow and deny lists | Operating principles, "Rules first" |
+| Credentials from the environment; narrowest OAuth scope | Storage, security, and privacy |
+| At most one series of three in prose | Style profile schema |
+| Single column; no tables, text boxes, columns, or icons | Style profile schema and Documents |
+| Style rules reduce but do not remove machine-writing tells | Operating principles, "Accuracy over polish" |
+| Roughly four in five Overture records come from Meta | Kept in the product overview, as a data limitation |
+| Multi-applicant use needs isolation, hosting, authentication | Kept in the product overview, as a scale limitation |
+| Journals excluded, autobiography allowed | Already in both; left in both, it is a product boundary and an implementation rule |
+
+**Removed from the product overview** as duplicates that would drift: its success criteria table,
+its non-goals list, the tech stack table, the "still being considered" table, and the future tasks
+checklist. The engineering plan carries all five in better form. The four conflicting claims went
+with them - prefill in the first build, the five-minute target, unattended scanning, and the daily
+cap - so the conflicts no longer exist to be explained.
+
+**Removed from the repository:** `docs/planning/README.md` and `docs/agent/doc-precedence.md`,
+both of which existed only to explain the conflict.
+
+**Audience split.** The root README and the product overview are for a person. `CLAUDE.md` and
+`docs/agent/` are for an agent and say so in their first line. The planning documents serve both.
+
+**Not changed.** No milestone, acceptance criterion, decision-log entry, or investigation was
+altered. Review 1's findings all stand as recorded above.

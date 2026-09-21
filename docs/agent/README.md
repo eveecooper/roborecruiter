@@ -1,24 +1,43 @@
 # Agent materials
 
-**For coding agents. A person does not need anything in this folder** - start at the
-[root README](../../README.md) instead.
+**For coding agents. A person does not need this folder** - start at the
+[root README](../../README.md).
 
-These files exist because the planning documents carry history an agent cannot infer from reading
-them: which draft is current, which conflicts are deliberate, and which questions are open on
-purpose. Without that, an agent reading the oldest document first will confidently implement
-decisions that were reversed.
+[`CLAUDE.md`](../../CLAUDE.md) at the repo root holds the rules that always apply and loads
+automatically. This file holds the rest: where to look, and the conventions that are not obvious
+from reading the documents.
 
-| File | Read it when |
+## Where to look
+
+The two planning documents have clean, non-overlapping jobs. Neither supersedes the other, and
+neither needs reading to understand the other.
+
+| Question | Document |
 | --- | --- |
-| [`doc-precedence.md`](doc-precedence.md) | Before acting on anything in `docs/planning/`. Which document wins, and why they disagree |
+| What is this, what will it not do, where is it weak? | [`00-product-overview.md`](../planning/00-product-overview.md) |
+| How is it built, in what order, what does "done" mean? | [`01-engineering-plan.md`](../planning/01-engineering-plan.md) |
+| Is this decided? | [`02-deferred-investigations.md`](../planning/02-deferred-investigations.md) - if it is listed there, no |
+| Why is it like this? | [`03-review-log.md`](../planning/03-review-log.md), then [`docs/adr/`](../adr/) |
 
-[`CLAUDE.md`](../../CLAUDE.md) at the repo root carries the rules that always apply and is loaded
-automatically. This folder holds the detail behind them, read on demand.
+An ADR outranks both planning documents on the single decision it records.
 
-## Keeping this folder useful
+## Conventions
 
-It is loaded into a limited context window, so it stays small. Detail belongs in the planning
-documents; this folder holds only what an agent needs *before* it can read those correctly.
+- **Open investigations A through G are not yours to close.** Several are routed to outside
+  expertise on purpose: legal review of crawl policy, entity-resolution thresholds, browser
+  submit-boundary safety. Picking a reasonable-sounding answer defeats the point of deferring it.
+  Flag the question and say plainly that it is unresolved.
+- **Record planning changes in the review log** with the reasoning, including what you chose not
+  to change. No silent rewrites of a decision.
+- **Check external facts rather than recalling them.** Several plan facts depend on sources that
+  move: the Overture schema and taxonomy, hiring-platform APIs, county open data. The review log
+  lists which were verified and when.
+- Planning documents carry YAML front matter describing what each one covers.
+- Filenames describe the document, not the editing event. "Revised", "final", and "v2" belong in
+  git history.
 
-If something here duplicates a planning document, the planning document is the source of truth and
-the copy here should become a link.
+## Keeping this small
+
+This folder is loaded into a limited context window. Detail belongs in the planning documents; only
+what an agent needs *before* reading those belongs here. If something here duplicates a planning
+document, the planning document wins and the copy here should become a link.

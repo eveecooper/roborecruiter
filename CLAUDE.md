@@ -2,23 +2,23 @@
 
 An assisted job application pipeline. Planning stage - no application code exists yet.
 
-## Read the planning docs in precedence order
+## Where things are
 
-`docs/planning/` contains two drafts that contradict each other in places, deliberately. Before
-acting on anything you read there:
+Two planning documents with non-overlapping jobs. Neither supersedes the other.
 
-1. `docs/adr/` - outranks everything, on the decision each ADR records.
-2. `docs/planning/01-engineering-plan.md` - **draft 3, authoritative** on anything operational.
-3. `docs/planning/00-product-overview.md` - **draft 1, superseded.** Product intent only.
-4. `docs/planning/02-deferred-investigations.md` - **open questions.** Settles nothing.
+- `docs/planning/00-product-overview.md` - what this is, what it will not do, where it is weak.
+- `docs/planning/01-engineering-plan.md` - how it is built: scope, stage design, milestones,
+  acceptance criteria, standards. **This is the one to follow when building.**
+- `docs/planning/02-deferred-investigations.md` - open questions. If a question is listed here,
+  it is undecided on purpose.
+- `docs/adr/` - outranks both planning documents, on the decision each ADR records.
 
-Full rule, lineage, and the specific traps: **[`docs/agent/doc-precedence.md`](docs/agent/doc-precedence.md)**.
-Read it before your first substantive change to a planning document.
+Conventions and the rest: [`docs/agent/README.md`](docs/agent/README.md).
 
 ## Working on this repo
 
-- Planning documents are the current deliverable. Treat them as code: no silent rewrites of a
-  decision, and record what changed and why in `docs/planning/03-review-log.md`.
+- Planning documents are the current deliverable. Treat them as code: record what changed and why
+  in `docs/planning/03-review-log.md`, including what you chose not to change.
 - Do not close an open investigation (A through G) by picking a reasonable-sounding answer. Several
   are routed to outside expertise on purpose. Flag it as unresolved instead.
 - Build order is M0 through M6 in the engineering plan. M1 and M2 are validation spikes that gate

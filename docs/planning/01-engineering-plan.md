@@ -1,17 +1,16 @@
 ---
 doc: engineering-plan
-draft: 3
-status: authoritative
-supersedes: 00-product-overview.md
+covers: [scope, stage design, milestones, standards]
+pairs_with: 00-product-overview.md
 open_items: 02-deferred-investigations.md
 ---
 
 # Assisted Job Application Pipeline: Engineering Plan
 
-> **Draft 3, current.** The working plan: scope, stage design, milestones, acceptance criteria,
-> and engineering standards. Open questions live in
-> [the investigations](02-deferred-investigations.md); what changed since draft 2 and why is in
-> [the review log](03-review-log.md).
+> **How this gets built.** Scope, stage design, milestones, acceptance criteria, and engineering
+> standards. What the product is and will not do is [the product overview](00-product-overview.md);
+> open questions are in [the investigations](02-deferred-investigations.md); what changed and why
+> is in [the review log](03-review-log.md).
 >
 > **Revision:** 2026-09-20  |  **Owner:** _unassigned - set before M0_
 
@@ -75,11 +74,11 @@ The first build covers server, host, and busser roles around ZIP 94085, from emp
 
 **Challenges go to the human.** When a site asks for a CAPTCHA, verification code, login decision, or attestation, the system pauses and hands over. It never solves, bypasses, or disguises its way past a challenge.
 
-**Rules first.** The crawler identifies itself where appropriate, obeys robots.txt and crawl delays, limits its request rate per domain, and does not automate restricted sources.
+**Rules first.** The crawler identifies itself where appropriate, obeys robots.txt and crawl delays, limits its request rate per domain, and does not automate restricted sources. A source policy file holds allow and deny lists. An unlisted source is shown for review and always handed off rather than prefilled.
 
 **One application per posting.** A second application happens only when the applicant presses Resubmit.
 
-**Accuracy over polish.** Materials use only facts the applicant has confirmed. Untraceable objective claims are flagged rather than invented.
+**Accuracy over polish.** Materials use only facts the applicant has confirmed. Untraceable objective claims are flagged rather than invented. Style rules reduce the tells of machine-written text but do not remove them; concrete facts and the applicant's own writing samples do most of that work.
 
 **Replayable automation.** Automated stages are safely retryable. A stage commits one logical output for a specific input fingerprint.
 
@@ -362,9 +361,14 @@ punctuation:
   en_dash: disallow
   ellipsis_character: disallow
 banned_phrases: []
+prose:
+  max_series_of_three: 1
+layout:
+  columns: single
+  disallowed_elements: [table, text_box, multi_column, icon]
 ```
 
-**Documents.** The system fills the Word template selected by the style profile, and LibreOffice exports each PDF. The conversion environment pins the LibreOffice version and template fonts so layout can be reproduced.
+**Documents.** The system fills the Word template selected by the style profile, and LibreOffice exports each PDF. The conversion environment pins the LibreOffice version and template fonts so layout can be reproduced. Templates use standard sections and a standard font in a single column, with no tables, text boxes, multiple columns, or icons, so that applicant tracking systems parse them reliably.
 
 Checks run on every document, including applicant-edited documents:
 
@@ -445,7 +449,7 @@ SQLite holds records; page snapshots and documents live on disk and are named by
 
 - Disable arbitrary downloads in automated browsing unless a specific adapter requires and validates them.
 
-- Keep secrets out of config files and logs.
+- Keep secrets out of config files and logs. Credentials come from the environment, never the repository, and any future OAuth scope is the narrowest that performs the task.
 
 - Redact or omit unnecessary PII from structured logs.
 
