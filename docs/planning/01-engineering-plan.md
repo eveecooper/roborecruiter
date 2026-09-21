@@ -78,7 +78,7 @@ The first build covers server, host, and busser roles around ZIP 94085, from emp
 
 **One application per posting.** A second application happens only when the applicant presses Resubmit.
 
-**Accuracy over polish.** Materials use only facts the applicant has confirmed. Untraceable objective claims are flagged rather than invented. Style rules reduce the tells of machine-written text but do not remove them; concrete facts and the applicant's own writing samples do most of that work.
+**Accuracy over polish.** Materials use only facts the applicant has confirmed. Untraceable objective claims are flagged rather than invented.
 
 **Replayable automation.** Automated stages are safely retryable. A stage commits one logical output for a specific input fingerprint.
 

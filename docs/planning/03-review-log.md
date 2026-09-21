@@ -147,3 +147,35 @@ both of which existed only to explain the conflict.
 
 **Not changed.** No milestone, acceptance criterion, decision-log entry, or investigation was
 altered. Review 1's findings all stand as recorded above.
+
+---
+
+## Review 3 - 2026-09-20
+
+**Scope:** a direction check on Review 2. When the two documents were given clean boundaries, did
+every surviving statement come from the *later* decision, or did any older wording survive?
+
+**Why it was asked.** Review 1's superseded-points table listed the four conflicts found during
+that review. Review 2 then removed those four and declared the conflict resolved. But that table
+was never a complete inventory - it recorded what one pass happened to catch - so resolving exactly
+those four proved nothing about the rest of the document.
+
+**Three older statements had survived.** All three were brought forward to the engineering plan's
+position. Nothing moved in the other direction.
+
+| Stale statement | Superseded by | Now says |
+| --- | --- | --- |
+| "It prepares, prefills where allowed, and stops", plus a bullet describing prefill coverage | Decision 22: prefill is post-M6, and the first build ships no browser worker | The first build does not fill forms at all; assisted prefill comes later on approved portals |
+| Overture licenses listed as CDLA Permissive 2.0 and Apache 2.0 | The verified three-license list, including CC0 1.0 for AllThePlaces | All three, noted as depending on contributing source |
+| "One application per posting, enforced by the database", stated flatly | P7: posting-level uniqueness alone does not catch one opening listed as two unmerged records | Adds the employer-and-role warning and the override |
+
+The prefill one mattered. A reader would have come away believing the first build fills forms,
+which is the single capability the plan most deliberately removed.
+
+**One duplicate of my own making, removed.** Review 2 said it was moving the machine-writing-tells
+limitation into the engineering plan, then left a copy in the product overview. It now lives only
+in the product overview, where it sets expectations, rather than in both.
+
+**Method note for next time.** Checking the conflicts already on a list only confirms that list.
+The check that actually works is to sweep the older document against each decision in the newer
+one, which is what this review did.

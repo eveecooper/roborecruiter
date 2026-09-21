@@ -85,9 +85,10 @@ What the system will not do well, and what it cannot know.
 
 ### Application
 
-- The system cannot submit. It prepares, prefills where allowed, and stops.
-- Prefill covers standard contact fields only. Screening questions, attestations, and uploads on
-  unfamiliar forms stay manual.
+- The system cannot submit. It prepares the application and stops.
+- The first build does not fill forms for you at all. It gives you an application sheet with the
+  files and prepared answers ready to copy. Assisted prefill of basic contact fields comes later,
+  on specific approved portals, and still hands off before any challenge or submission.
 - Response tracking is manual until email reading is added.
 
 ### Scale
@@ -109,13 +110,15 @@ Rules the system follows by design, not by preference.
   applicant, who completes them in a visible browser session.
 - Sources whose terms prohibit automated access receive none. Indeed enters only through manual
   intake, where the applicant pastes a link and description.
-- Overture data carries CDLA Permissive 2.0 and Apache 2.0 licenses, which require attribution if
-  data is redistributed.
+- Overture data carries CDLA Permissive 2.0, Apache 2.0, and CC0 1.0 licenses depending on the
+  contributing source. These require attribution if the data is redistributed.
 
 ### Application conduct
 
 - One application per posting, enforced by the database. A second attempt happens only when the
-  applicant presses Resubmit.
+  applicant presses Resubmit. Because the same opening can appear as two records that were not
+  confidently matched, a second warning checks for a recent application to the same employer and
+  role, which the applicant can override.
 - Attestations, work authorization answers, and voluntary disclosures are answered by the
   applicant at submission.
 
