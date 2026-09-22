@@ -19,7 +19,7 @@ neither needs reading to understand the other.
 | Is this decided? | [`02-deferred-investigations.md`](../planning/02-deferred-investigations.md) - if it is listed there, no |
 | Why is it like this? | [`03-review-log.md`](../planning/03-review-log.md), then [`docs/adr/`](../adr/) |
 
-An ADR outranks both planning documents on the single decision it records.
+An ADR outranks both planning documents on the single decision it records. [ADR 0001](../adr/0001-phased-delivery.md) is the one most likely to matter: delivery is phased Apply, Discover, Generalize, and any leftover M0-M6 wording anywhere is stale.
 
 ## Conventions
 

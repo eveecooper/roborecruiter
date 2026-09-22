@@ -1,11 +1,12 @@
 # roborecruiter
 
-An assisted job application pipeline. It finds front-of-house restaurant openings near a chosen
-location, prepares the application materials, and hands you the steps that need a person: the three
-review gates, any verification challenge, and the final submit button.
+An assisted job application pipeline. It prepares the application materials for a job opening and
+hands you the steps that need a person: the review gates, any verification challenge, and the final
+submit button. Later it learns to find the openings too.
 
 **Status:** planning. No application code yet.
-**Pilot:** ZIP 94085, 5-mile radius, front-of-house roles (server, host, busser).
+**Next:** Phase 1, which applies to postings you bring it.
+**Pilot for Phase 2:** ZIP 94085, 5-mile radius, front-of-house roles (server, host, busser).
 
 ## Documentation
 
@@ -20,24 +21,35 @@ review gates, any verification challenge, and the final submit button.
 
 ## How it gets built
 
-Seven milestones, M0 through M6, in the [engineering plan](docs/planning/01-engineering-plan.md).
-Each one ends in something runnable.
+Three phases in the [engineering plan](docs/planning/01-engineering-plan.md). Each one is useful on
+its own, and each step inside one ends in something runnable.
 
-The order is not arbitrary. Two validation spikes come before any serious architecture: **M1**
-checks whether the employer data source actually finds local restaurants, and **M2** checks whether
-careers pages can be detected without silently discarding real openings. Both are assumptions
-capable of invalidating the product, so they get tested before anything is built on top of them.
-If a spike fails, the response is to fix the source or the approach, not to add architecture around
-the problem.
+**Phase 1, Apply.** You paste a posting; it produces materials that trace to confirmed facts and an
+application sheet you submit yourself. Source-agnostic, so a restaurant posting and a software
+posting travel the same path.
 
-Prefill, writer models, and extra job types all come after M6.
+**Phase 2, Discover.** Finds the postings for you, around a ZIP code. This is where the two
+validation spikes live: one checks whether the employer data source actually finds local
+restaurants, the other whether careers pages can be detected without silently discarding real
+openings. Both are assumptions capable of invalidating automated discovery, so they are tested
+before the crawl infrastructure is built on them. A third measurement asks whether the postings
+exist at all, because the first two can pass while the pipeline returns nothing.
 
-## Before M0 starts
+**Phase 3, Generalize.** Other ways of assembling an employer set, description-level matching, more
+job types, and eventually verticals that are not geographic. Prefill and writer models are here too.
 
-- The engineering plan has no owner assigned.
+Why this order rather than building discovery first: [ADR 0001](docs/adr/0001-phased-delivery.md).
+
+## Before Phase 1 starts
+
+- Investigation G (effort instrumentation) is open and blocks step 1.4. It is small.
+- A base resume, cover letter, experience file, and timeline need to exist as input.
+
+## Before Phase 2 starts
+
+- Investigation D (source policy) is open and blocks every fetch in the phase.
 - The Overture `basic_category_allow` list needs filling from the pinned taxonomy release.
 - A current-year extract of the Santa Clara County permit data needs confirming as downloadable.
-- Investigations D (source policy) and F (claim-check feasibility) are open and block M2 and M5.
 
 ## Rules the system follows by design
 

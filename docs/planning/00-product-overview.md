@@ -10,12 +10,15 @@ pairs_with: 01-engineering-plan.md
 > project accepts by design. How it gets built is [the engineering plan](01-engineering-plan.md);
 > this document does not cover implementation.
 
-An assisted job application pipeline. It finds front-of-house restaurant openings near a chosen
-location, prepares the application materials, and hands the applicant the steps that require a
-person.
+An assisted job application pipeline. It prepares the application materials for a job opening and
+hands the applicant the steps that require a person. Finding the openings is the second thing it
+learns to do, not the first.
 
-- **Status:** planning. First build not started.
-- **Pilot:** ZIP 94085, 5-mile radius, front-of-house roles (server, host, busser).
+- **Status:** planning. Phase 1 not started.
+- **Delivered in three phases:** Apply, then Discover, then Generalize. Phase 1 applies to postings
+  the applicant brings it. Phase 2 adds the discovery that finds them. Phase 3 is where verticals
+  other than restaurants become possible. See [ADR 0001](../adr/0001-phased-delivery.md).
+- **Pilot for Phase 2:** ZIP 94085, 5-mile radius, front-of-house roles (server, host, busser).
 - **How it is built:** [engineering plan](01-engineering-plan.md)
 - **Decisions:** [`docs/adr/`](../adr/)
 
@@ -43,7 +46,9 @@ of that time and are the most automatable parts.
    tells.
 4. **Control.** Keep selection, wording, and submission under the applicant's authority.
 5. **Extensibility.** Support new job types and new industries through configuration rather than
-   new code.
+   new code. The intended direction is away from geography: a vertical selected by what a posting
+   says rather than where it is, beginning with software roles. That is Phase 3 work and is not
+   designed yet. What exists now is the shape it will plug into.
 
 ---
 
@@ -51,13 +56,20 @@ of that time and are the most automatable parts.
 
 What the system will not do well, and what it cannot know.
 
+**Data, careers page detection, and postings are all limitations of discovery, which arrives in
+Phase 2.** Phase 1 has no data source of its own, because the applicant supplies the posting. They
+are listed here because they are real and they bound what the finished product can promise, not
+because they apply to the first thing built.
+
 ### Data
 
 - Employer data comes from Overture Maps, which lists duplicates, a high junk rate, and low
   property completeness as known issues. Coverage in any given area is unverified until measured.
 - Roughly four in five Overture place records originate with Meta, sourced largely from public
   Facebook pages. Businesses with no online listing presence are likely underrepresented.
-- Some employers have no website in the data. They can only reach the walk-in list.
+- Some employers have no website in the data. They can only reach the walk-in list, and what a
+  walk-in entry is actually worth to the applicant is undecided - see the non-posting outcomes
+  row in the engineering plan's open discussions.
 - Releases are monthly, so newly opened or closed businesses lag reality.
 
 ### Careers page detection
@@ -77,18 +89,24 @@ What the system will not do well, and what it cannot know.
 
 ### Materials
 
-- The first build has no writer model. Materials come from approved variants with safe fields
+- There is no writer model before Phase 3. Materials come from approved variants with safe fields
   filled per posting, not from per-posting drafting.
 - Style rules reduce AI writing tells; they do not remove them. Concrete facts and the applicant's
   own writing samples do most of that work.
 - Accuracy depends on the fact bank. Anything the applicant has not confirmed cannot be used.
 
+- Generated documents cannot be hand-edited. To change what one says, the applicant changes a fact
+  or a template and regenerates. This is what keeps every claim traceable, and it is a real
+  constraint rather than a formality: a wording change the templates do not anticipate means
+  changing a template.
+
 ### Application
 
 - The system cannot submit. It prepares the application and stops.
-- The first build does not fill forms for you at all. It gives you an application sheet with the
-  files and prepared answers ready to copy. Assisted prefill of basic contact fields comes later,
-  on specific approved portals, and still hands off before any challenge or submission.
+- It does not fill forms for you. It gives you an application sheet with the files and prepared
+  answers ready to copy. Assisted prefill of basic contact fields is Phase 3 work on specific
+  approved portals, and still hands off before any challenge or submission. Phases 1 and 2 ship
+  no browser worker at all.
 - Response tracking is manual until email reading is added.
 
 ### Scale

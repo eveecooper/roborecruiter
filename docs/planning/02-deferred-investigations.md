@@ -10,31 +10,34 @@ derived_from: 01-engineering-plan.md
 > from any other document. Each brief names who should answer it, what it unblocks, and what it
 > costs to keep deferring it.
 
-These investigations intentionally follow the engineering plan rather than blocking the first build.
+Phasing changed which of these are urgent. D no longer blocks the project, only Phase 2. F no longer
+blocks materials, because Phase 1 does not hand-edit documents. G moved forward, because effort
+instrumentation now lands in Phase 1 rather than last. See
+[ADR 0001](../adr/0001-phased-delivery.md) and Review 4.
 
 | Brief | Question | Unblocks | Status |
 | --- | --- | --- | --- |
-| A | Discovery-noise threshold | M1 exit, discovery config | Deferred - needs M1 data |
+| A | Discovery-noise threshold | Step 2.1 exit, discovery config | Deferred - needs step 2.1 data |
 | B | Cross-source entity-resolution threshold | Auto-merge policy | Deferred - needs a second source |
-| C | Browser-prefill submit boundary | Post-M6 prefill adapters | Deferred - needs M6 complete |
-| D | Source policy: crawler identity, robots vs. ToS, retention | M2 start | **Open now - blocks M2** |
-| E | Hiring-platform census | M4 adapter build list | Open at M2 completion |
-| F | Claim-check feasibility without a model | M5 acceptance criteria | **Open now - blocks M5 wording** |
-| G | Effort instrumentation and its statistics | M6 acceptance criteria | Open - small, owner decision |
+| C | Browser-prefill submit boundary | Phase 3 prefill adapters | Deferred - needs Phase 1 complete |
+| D | Source policy: crawler identity, robots vs. ToS, retention | Step 2.0, and every fetch after it | **Blocks all of Phase 2. Does not block Phase 1.** |
+| E | Hiring-platform census | Step 2.2 exit and the adapter build list | Open at step 2.2 |
+| F | Claim-check feasibility without a model | Span-level claim detection, if it is ever built | Deferred - decision 34 removes the dependency |
+| G | Effort instrumentation and its statistics | Step 1.4 acceptance criteria | **Open now - blocks step 1.4** |
 
-## Investigation A - Discovery-noise threshold after M1
+## Investigation A - Discovery-noise threshold after step 2.1
 
 **Best owner:** senior data/relevance engineer, search quality engineer, or applied data scientist with experience in information retrieval evaluation and labeled datasets.
 
-**Start condition:** M1 discovery spike has completed and produced the full returned-employer set plus discovery-accounting labels.
+**Start condition:** the step 2.1 discovery spike has completed and produced the full returned-employer set plus discovery-accounting labels.
 
-**Unblocks:** the discovery noise threshold in run configuration, and the M1 regression gate for later Overture releases.
+**Unblocks:** the discovery noise threshold in run configuration, and the step 2.1 regression gate for later Overture releases.
 
-**Cost of deferring:** none for the first build. Without a threshold, discovery noise is observed and reported but not gated, so a later Overture release could quietly degrade precision without failing anything.
+**Cost of deferring:** none for Phase 1, which does not discover anything. Without a threshold, discovery noise is observed and reported but not gated, so a later Overture release could quietly degrade precision without failing anything.
 
 **Question:** What regression threshold should the project use for discovery noise without hiding meaningful employer recall?
 
-**Inputs:** all M1 returned records; the sampled answer key and the applicant's recalled list, kept separate; accounting labels (eligible, closed, duplicate, wrong-category, outside-radius, junk/unverifiable, eligible-without-website); query/config fingerprint; Overture release.
+**Inputs:** all step 2.1 returned records; the sampled answer key and the applicant's recalled list, kept separate; accounting labels (eligible, closed, duplicate, wrong-category, outside-radius, junk/unverifiable, eligible-without-website); query/config fingerprint; Overture release.
 
 **Work:**
 1. Define the measurement denominator explicitly. Report both raw-result precision and post-dedup/filter precision rather than a single ambiguous "noise rate."
@@ -84,11 +87,11 @@ These investigations intentionally follow the engineering plan rather than block
 
 **Best owner:** senior browser-automation engineer with Playwright expertise plus web-application security experience. Ideal background includes form automation, SPA behavior, iframe/shadow-DOM handling, network interception, and threat modeling. A security engineer should review the final design before production use.
 
-**Start condition:** M6 succeeds without browser prefill and the pilot identifies the one or two hiring platforms worth automating first.
+**Start condition:** Phase 1 succeeds without browser prefill and the step 2.2 census identifies the one or two hiring platforms worth automating first.
 
 **Unblocks:** any browser-prefill adapter reaching production.
 
-**Cost of deferring:** none to correctness. Prefill is a time saver, not a capability the pipeline depends on, and M6 completes without it. Deferring costs applicant minutes per application and nothing else.
+**Cost of deferring:** none to correctness. Prefill is a time saver, not a capability the pipeline depends on, and Phase 1 completes without it. Deferring costs applicant minutes per application and nothing else.
 
 **Question:** Can a bounded portal adapter fill approved fields and reliably hand off before human verification, attestations, or submission, including when the portal changes or behaves unexpectedly?
 
@@ -115,11 +118,13 @@ These investigations intentionally follow the engineering plan rather than block
 
 **Best owner:** technology and privacy counsel, with a crawler engineer for the technical half.
 
-**Start condition:** open now. This one blocks M2 rather than following it.
+**Start condition:** open now, and it blocks step 2.0, which gates every fetch in Phase 2.
 
-**Unblocks:** M2 fixture capture, the crawler's user-agent decision, and the retention period left open in the engineering plan.
+**What phasing changed.** Under the old M0-M6 sequence this brief blocked M2, and M2 gated M3 through M6, so a question whose named owner is counsel could stop the project permanently. It now blocks Phase 2 alone. Phase 1 fetches nothing and is unaffected. That is the deadlock removed, not the question answered.
 
-**Cost of deferring:** M2 proceeds on an unwritten policy. Saved fixtures are the part at risk, because they are the one place the project retains third-party content, and reversing that decision later means discarding the fixture corpus the detector was built against.
+**Unblocks:** step 2.2 fixture capture, the crawler's user-agent decision, and the retention period left open in the engineering plan.
+
+**Cost of deferring:** Phase 2 cannot start. That is a real cost and a deliberate one: the alternative is fetching on an unwritten policy. Saved fixtures are the part at risk, because they are the one place the project retains third-party content, and reversing that decision later means discarding the fixture corpus the detector was built against.
 
 **Question:** What are this project's rules for identifying itself, for resolving robots.txt against a site's terms of service, and for retaining copies of employer pages?
 
@@ -129,11 +134,11 @@ These investigations intentionally follow the engineering plan rather than block
 3. Decide whether retaining local snapshots of third-party employer pages is acceptable, and for how long. This also settles the retention period left open in the engineering plan.
 4. Decide whether applicant-initiated capture on a restricted source such as Indeed differs from automated access.
 
-**Technical sub-question for the crawler engineer:** an honest custom user-agent raises block rates on sites behind a WAF, which directly inflates M2's blocked-outcome rate and can fail its pass criteria. Weigh a custom user-agent against a standard one paired with honest contact headers and a contact page. This is a real tradeoff between compliance posture and measured detection performance, and it should be decided deliberately rather than by default.
+**Technical sub-question for the crawler engineer:** an honest custom user-agent raises block rates on sites behind a WAF, which directly inflates step 2.2's blocked-outcome rate and can fail its pass criteria. Weigh a custom user-agent against a standard one paired with honest contact headers and a contact page. This is a real tradeoff between compliance posture and measured detection performance, and it should be decided deliberately rather than by default.
 
 **Deliverable:** a written source policy in `docs/adr/`, covering identity, precedence, retention, and restricted sources.
 
-**Acceptance:** M2 can point at a specific clause for every fetch and retention decision it makes.
+**Acceptance:** Phase 2 can point at a specific clause for every fetch and retention decision it makes.
 
 **Note:** this brief was raised during the draft 2 review. The reviewer explicitly declined to propose answers, because these are jurisdiction-specific and terms-specific legal judgments where a confident-sounding guess is worse than an open question.
 
@@ -141,25 +146,27 @@ These investigations intentionally follow the engineering plan rather than block
 
 ## Investigation E - Hiring-platform census for this vertical
 
-**Best owner:** whoever runs M2. This is a half-day data task, not a research project.
+**Best owner:** whoever runs step 2.2. This is a half-day data task, not a research project.
 
-**Start condition:** M2 detection has run across the pilot employers.
+**Start condition:** step 2.2 detection has run across the pilot employers.
 
-**Unblocks:** the M4 adapter build list.
+**Unblocks:** the Phase 2 adapter build list, and the posting-yield criterion that shares its data.
 
-**Cost of deferring:** M4 risks spending its adapter budget on platforms that return no pilot postings.
+**Cost of deferring:** the adapter budget risks being spent on platforms that return no pilot postings, and the yield criterion has no channel breakdown to report against.
 
 **Question:** Which hiring platforms do restaurant employers in the pilot area actually use?
 
 **Work:**
-1. From M2's detection results, produce a frequency table of every hiring platform encountered, including the categories "no platform, static page" and "Indeed-hosted".
-2. Set a minimum occurrence count for building an adapter, and choose the M4 build list from the table.
+1. From step 2.2's detection results, produce a frequency table of every hiring platform encountered, including the categories "no platform, static page" and "Indeed-hosted".
+2. Set a minimum occurrence count for building an adapter, and choose the build list from the table.
 
-**Background:** the engineering plan names Greenhouse and Lever. Both public endpoints are live and unauthenticated, so the adapters are buildable, but both serve corporate and knowledge-work hiring. Restaurants more commonly hire through hospitality-specific tools such as Workstream, Harri, 7shifts, Toast, HigherMe, and Snagajob, or through Indeed-hosted applications, which this project does not automate. That is a market observation rather than a measurement, which is exactly why this census exists: M2 visits every one of these sites anyway, so the answer costs nothing extra.
+3. Report the same table as a yield breakdown: how many eligible postings each channel actually carried, including how many reached no automatable channel at all. This is the evidence behind Phase 2's continue-or-stop decision.
+
+**Background:** a low count here is not by itself a reason to skip building an adapter. Greenhouse and Lever look marginal for restaurants and are a primary channel for the software vertical in Phase 3, so this census decides their ordering rather than their fate. The engineering plan names Greenhouse and Lever. Both public endpoints are live and unauthenticated, so the adapters are buildable, but both serve corporate and knowledge-work hiring. Restaurants more commonly hire through hospitality-specific tools such as Workstream, Harri, 7shifts, Toast, HigherMe, and Snagajob, or through Indeed-hosted applications, which this project does not automate. That is a market observation rather than a measurement, which is exactly why this census exists: step 2.2 visits every one of these sites anyway, so the answer costs nothing extra.
 
 **Deliverable:** the frequency table plus a one-paragraph adapter decision.
 
-**Acceptance:** every adapter in the M4 plan traces to a row in the table.
+**Acceptance:** every adapter in the Phase 2 plan traces to a row in the table, and the yield breakdown is reported whether or not it is encouraging.
 
 ---
 
@@ -167,11 +174,13 @@ These investigations intentionally follow the engineering plan rather than block
 
 **Best owner:** NLP or applied scientist with information-extraction experience.
 
-**Start condition:** open now, before M5 acceptance criteria are finalized.
+**Start condition:** before span-level claim detection is built, if it ever is.
 
-**Unblocks:** the M5 claim-check acceptance criteria and the scope of the style linter.
+**What phasing changed.** Decision 34 removes hand-editing of generated documents from Phase 1, so every claim is structurally bound to a confirmed fact ID and there is no free prose for a detector to scan. This brief no longer blocks anything. It becomes relevant only if the regenerate-only constraint proves unworkable and editing is reintroduced.
 
-**Cost of deferring:** M5 ships with an acceptance criterion nobody has verified is reachable, which tends to be resolved by quietly weakening it during the milestone.
+**Unblocks:** span-level claim detection and the scope of the style linter, if editing is reintroduced.
+
+**Cost of deferring:** none, while regenerate-only holds. The failure this brief was written to prevent - shipping an acceptance criterion nobody has verified is reachable, then quietly weakening it mid-milestone - is now prevented by removing the criterion's subject rather than by answering the question. If editing returns, so does the original cost.
 
 **Question:** What fraction of the objective factual claims in real application materials can a rule-based detector actually catch, with no model available?
 
@@ -181,9 +190,9 @@ These investigations intentionally follow the engineering plan rather than block
 3. Measure what fraction a rule and gazetteer based detector catches: dates, durations, numbers, employer names, job titles, certifications.
 4. Report recall per claim type, not pooled.
 
-**Deliverable:** the concrete list of claim types the first build will verify, the list it explicitly will not verify, and the attestation flow covering the gap.
+**Deliverable:** the concrete list of claim types a detector would verify, the list it explicitly would not, and the attestation flow covering the gap.
 
-**Acceptance:** the M5 criterion states a measured coverage figure per claim type rather than an unfalsifiable claim about all assertions.
+**Acceptance:** the criterion states a measured coverage figure per claim type rather than an unfalsifiable claim about all assertions.
 
 **Note:** draft 2 required that every objective assertion in every document, including applicant-edited ones, trace to confirmed provenance. Extracting every objective assertion from free-form prose is open-ended work, and the first build uses no model, so the requirement as written could not be met or even tested. Draft 3 narrows it to structural provenance for generated text plus attestation for edits. This investigation supplies the numbers that fix the remaining boundary.
 
@@ -193,9 +202,9 @@ These investigations intentionally follow the engineering plan rather than block
 
 **Best owner:** the project owner, with light analytics help if wanted.
 
-**Start condition:** open now. Small.
+**Start condition:** open now, and on the Phase 1 critical path rather than at the last milestone. Still small.
 
-**Unblocks:** the M6 applicant-effort acceptance criteria.
+**Unblocks:** the step 1.4 applicant-effort acceptance criteria.
 
 **Cost of deferring:** the effort criterion cannot be evaluated, because nothing defines where the clock starts and stops.
 
@@ -207,6 +216,6 @@ These investigations intentionally follow the engineering plan rather than block
 3. Confirm which time scope counts against the run budget by default.
 4. Confirm the reported statistics. Draft 3 reports n, median, min, and max, and drops p90, because the 90th percentile of at most 20 applications is the second-largest value and moves with a single bad portal.
 
-**Deliverable:** the instrumentation spec, folded into the M6 criteria.
+**Deliverable:** the instrumentation spec, folded into the step 1.4 criteria.
 
-**Acceptance:** an M6 run produces an effort report that can be read without knowing how it was measured.
+**Acceptance:** a step 1.4 run produces an effort report that can be read without knowing how it was measured.

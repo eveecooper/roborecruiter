@@ -21,8 +21,10 @@ Conventions and the rest: [`docs/agent/README.md`](docs/agent/README.md).
   in `docs/planning/03-review-log.md`, including what you chose not to change.
 - Do not close an open investigation (A through G) by picking a reasonable-sounding answer. Several
   are routed to outside expertise on purpose. Flag it as unresolved instead.
-- Build order is M0 through M6 in the engineering plan. M1 and M2 are validation spikes that gate
-  the architecture; if one fails, fix the source or the approach rather than building around it.
+- Build order is Phase 1 (Apply), Phase 2 (Discover), Phase 3 (Generalize) in the engineering plan.
+  Steps 2.1 and 2.2 are validation spikes; if one fails, fix the source or the approach rather than
+  building around it. [ADR 0001](docs/adr/0001-phased-delivery.md) records why this replaced the
+  earlier M0-M6 sequence, and outranks any leftover milestone wording.
 - Say plainly when something is unverified. Several plan facts depend on external sources that
   move, so check rather than recall.
 
@@ -33,6 +35,6 @@ not implement a capability that would make relaxing it easy:
 
 - No bot-detection evasion, CAPTCHA solving, proxy rotation, or `robots.txt` violations.
 - No automated access to Indeed or any source whose terms forbid it.
-- **No code path that can submit an application.** The first build ships no browser worker at all,
+- **No code path that can submit an application.** Phases 1 and 2 ship no browser worker at all,
   and CI asserts no adapter exposes a submit, click-to-submit, or form-post operation.
 - No claim in generated materials that does not trace to a confirmed fact.

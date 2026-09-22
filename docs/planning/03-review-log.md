@@ -179,3 +179,108 @@ in the product overview, where it sets expectations, rather than in both.
 **Method note for next time.** Checking the conflicts already on a list only confirms that list.
 The check that actually works is to sweep the older document against each decision in the newer
 one, which is what this review did.
+
+---
+
+## Review 4 - 2026-09-21
+
+**Scope:** the engineering plan's sequencing, and a general review of the whole plan at the owner's
+request. This review changed the delivery order. Earlier reviews changed wording and structure;
+this one changed what gets built first.
+
+**Why it was asked.** The owner asked what the plan looked like and what needed clarifying. The
+review surfaced findings, and answering the first question - what is this project for? - turned out
+to change the answer to most of the others.
+
+### What the plan was not asking
+
+Six findings, in the order they mattered.
+
+| # | Finding | Response |
+| --- | --- | --- |
+| R1 | **Nothing measured yield.** M1 measured employer recall and M2 measured detection accuracy. Neither asked whether postings exist. Both could pass in full - 85% recall, 30/30 correct outcomes - while the Gate 1 table held four rows, three of them routing to Indeed | Posting yield is now a Phase 2 exit criterion in its own right, reported by channel, with an explicit continue-or-stop decision. Investigation E gains the yield breakdown, since step 2.2 visits those sites anyway. Decision 35 |
+| R2 | **Investigation D deadlocked the build.** D blocked M2, M2 gated M3 through M6, and D's named owner is counsel. On a single-applicant local project that owner is unlikely to exist, so the sequence could reach M1 and stop permanently | Dissolved by the phase restructure rather than answered. D now blocks Phase 2 alone; Phase 1 fetches nothing. The question itself remains open and unanswered, which is correct |
+| R3 | **Two of six detection outcomes fell out of the pipeline.** Walk-in and Instructions only produce no Posting, but Gate 1 is a posting table, materials fill slots from a posting, the duplicate guard keys on employer plus role, and the application record stores a posting snapshot hash | Named as an open question at step 2.4 and as an open-discussion row, with the specific sub-questions written down. Not answered here: it needs real walk-in counts to answer well |
+| R4 | **A single-sweep design for a recurring activity.** No delta between runs, no posting-closed detection, no re-scan cadence. Run one harvests a standing pool; run two re-presents decisions the applicant already made | Posting lifecycle and a new-since-last-run view are required at step 2.4, and the risk is in the risks table. The design itself is an open discussion |
+| R5 | **Nothing was usable until M6.** Manual intake, materials, and the application sheet have no dependency on discovery, and they are where the owner's near-term value sits | The restructure. See below |
+| R6 | **M2's zero-defect bar was weaker than M1's stated rigor.** The plan applies Wilson intervals carefully to recall, then states a zero-defect criterion on a holdout of roughly 15 without the same caveat. Zero silent false negatives on 15 is consistent with a true miss rate up to about 20%, and a detector missing one in ten passes it about one time in five | The criterion stays, because one known silent miss is worth stopping for. The plan now states what the holdout size actually licenses, so the report cannot imply the detector is clean |
+
+Smaller: M0's exit criterion required running the discovery query that M1 listed as its own
+deliverable, the owner field was unassigned ceremony on a single-applicant project, and
+`requirements.txt` is committed empty. The first dissolved with the restructure, the second is now
+set, the third is left alone.
+
+### The restructure
+
+**What the owner said.** Both the system and the job matter, in that order of care but not of
+urgency: real engineering rather than a script, and a job soon. Front-of-house restaurant work is a
+starting point chosen because restaurants are easy to enumerate by location. The reach goal is
+other verticals, beginning with software roles, selected by what a posting says rather than where
+it is - and the owner named the hard part correctly, which is finding and filtering postings
+without paying for a data source.
+
+**What that changed.** Restaurant search is employer-first: find places, find careers pages, find
+postings. Software search is posting-first: query an index, get postings, resolve the employer
+afterwards. The plan already contained a posting-first path - the manual-intake edge in the stage
+diagram - but treated it as a convenience feature rather than as the seam the second vertical needs.
+
+Delivery is now three phases, recorded in [ADR 0001](../adr/0001-phased-delivery.md):
+
+- **Phase 1, Apply.** Intake, fact bank, materials, Gate 2, application sheet, Gate 3, records.
+  Fed by manual intake. Source-agnostic.
+- **Phase 2, Discover.** The two spikes, the crawl boundary, the durable queue, Gate 1. Gated by
+  Investigation D.
+- **Phase 3, Generalize.** Company lists, board APIs, description matching, the software profile,
+  prefill, writer models.
+
+Phase 1 builds the artifact store and `stage_runs`, because approval hashing is load-bearing for
+materials, and defers the durable job queue to the phase that has asynchronous work. Architecture
+hardening stopped being a milestone and became a property of each phase, which means the discipline
+that kept it honest now has to come from phase exit criteria instead.
+
+**Four seams settled early**, as the hedge against freezing the wrong domain model: posting sources
+behind a port with manual intake as the first adapter; `Employer` rather than `EmployerLocation`;
+employer-set discovery as a registered strategy; classification as a named strategy. Decisions 29
+through 32. The cost is defining four interfaces before a second implementation exists to test them
+against, and ADR 0001 names what would show the hedge did not pay.
+
+Eight decisions added, 28 through 35. Four open-discussion rows added. Three risks added.
+
+### Deliberately not changed
+
+- **Every investigation A through G stays open.** D in particular was made non-blocking for Phase 1
+  without being answered, and the brief now says so explicitly so the distinction is not lost. The
+  crawler-identity tradeoff, the retention question, and robots-versus-terms precedence are all
+  still unanswered and still routed to counsel.
+- **Investigation F was not closed either**, though it is no longer blocking. Decision 34 removes
+  hand-editing from Phase 1, which removes the free prose a detector would have scanned. The
+  question of what a rule-based detector can actually catch is unanswered; it is now unasked. If
+  editing returns, F returns with it, and F's brief says so.
+- **The 80% recall gate, the 30-employer key, the Wilson interval discipline, the dev/holdout split,
+  the cost-weighted noise framing.** Review 1 got these right and nothing here disturbs them. They
+  moved to Phase 2 unchanged.
+- **The restaurant pilot.** Keeping ZIP 94085 and front-of-house as Phase 2's target was tempting to
+  revisit given the reach goal, but the owner's reasoning holds: restaurants are the easiest
+  employer set to enumerate by location, which makes them the right vertical to debug discovery
+  against even if they are not the vertical with the best yield.
+- **`requirements.txt`, committed and empty.** Not worth a line in a planning review; it will be
+  filled by the first code.
+- **The Google Maps figure marked as dated in Review 1.** Still dated, still marked, still not
+  re-verified.
+
+### Unverified in this review
+
+This review checked no external facts. It is a sequencing and structure review, and every external
+claim in the plan traces to Review 1's verification table with the dates recorded there. Anything
+load-bearing that has moved since 2026-09-20 has moved unnoticed.
+
+### Open as of this review
+
+A snapshot, not a live list - the root README carries the current status.
+
+- Investigation G blocks step 1.4 and is small and unowned.
+- Investigation D blocks all of Phase 2 and has no path to resolution on a solo project. The
+  restructure bought time; it did not solve this.
+- `basic_category_allow` is empty and must be filled from the pinned taxonomy release before Phase 2.
+- A current-year extract of the county permit data has not been confirmed downloadable.
+- Non-posting outcomes and repeat-run behaviour are open discussions with no leaning recorded.
