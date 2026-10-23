@@ -59,8 +59,9 @@ Formatting carries the signal of what a message is, so the sentences carry only 
   me, not to you, and it is read-only - it explains the work, it never does the work.
 - **Routine changes do not.** Report those yourself in a sentence or two: what changed, whether it
   worked, what happens next. Do not invoke another agent for them.
-- The explainer defaults to 100 words and closes by offering depth on one specific point. If I
-  take the offer, relay the follow-up; do not pre-empt it by pasting the long version first.
+- The explainer sets its own length and does not ask whether I want more depth. If I want more, I
+  will ask for it. Its definition lives only in `~/.claude/agents/`, because this repository
+  ignores `.claude/` and a copy here could never travel with it.
 
 ## Constraints that are not negotiable
 
