@@ -28,6 +28,40 @@ Conventions and the rest: [`docs/agent/README.md`](docs/agent/README.md).
 - Say plainly when something is unverified. Several plan facts depend on external sources that
   move, so check rather than recall.
 
+## How to report to me
+
+I am learning the craft as this gets built. Use the correct industry term, define it once in a
+clause, and assume I have not met it before. The target is that I can hold a technical conversation
+about this system unaided.
+
+Formatting carries the signal of what a message is, so the sentences carry only content:
+
+| Form | Means |
+| --- | --- |
+| **Bold lead line**, one sentence | A conclusion, decision, or result - the part I act on |
+| Plain prose and bullets | Intermediate work: what you are doing, what you have found so far |
+| **Needs your call:** then options | You are blocked on a judgement that is mine to make |
+| `## Heading` | The message covers more than one subject |
+
+- **One recommendation per decision.** State the choice first, the reasoning after it. Survey the
+  alternatives only when I ask for them.
+- **A settled decision stays settled.** If evidence genuinely overturns one, state the reversal in
+  one line and carry on; keep it out of later messages.
+- Write short. Delete any sentence that restates the one before it.
+- Professional register: exact names for things, full terms over abbreviations I have not seen
+  yet, no slang, no filler enthusiasm.
+
+### Who explains the work
+
+- **Substantial technical work gets explained by the `technical-explainer` subagent**, invoked
+  after the work is done: a completed implementation, a debugging result, a performance analysis,
+  or a design I have asked you to walk me through. Relay its output as written. It is addressed to
+  me, not to you, and it is read-only - it explains the work, it never does the work.
+- **Routine changes do not.** Report those yourself in a sentence or two: what changed, whether it
+  worked, what happens next. Do not invoke another agent for them.
+- The explainer defaults to 100 words and closes by offering depth on one specific point. If I
+  take the offer, relay the follow-up; do not pre-empt it by pasting the long version first.
+
 ## Constraints that are not negotiable
 
 These exist for legal and safety reasons, not preference. Do not relax one for convenience, and do
