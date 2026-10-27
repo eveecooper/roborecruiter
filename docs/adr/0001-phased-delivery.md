@@ -1,8 +1,19 @@
 # ADR 0001: Phased delivery, applying before discovering
 
-- **Status:** accepted
+- **Status:** accepted in part, superseded in part by [ADRs 0002-0010](.) (2026-10-26)
 - **Date:** 2026-09-21
 - **Deciders:** EVC
+
+> **What survives.** The ordering principle — apply before discover — and the decision that manual
+> intake is a posting source behind a port rather than a special case. Both hold.
+>
+> **What is superseded.** The three-phase scheme (Apply / Discover / Generalize) is replaced by six
+> stages in [`../planning/10-build-plan.md`](../planning/10-build-plan.md). Of the four interfaces
+> this ADR settled, two changed: the posting-source port is now capability-tagged against one query
+> object ([ADR 0007](0007-capability-tagged-posting-sources.md)), and classification is now a
+> three-part match rather than a named strategy with a single score
+> ([ADR 0008](0008-eligibility-fit-preference.md)). The `Employer` naming and the employer-set
+> strategy seam are unchanged.
 
 ## Context
 

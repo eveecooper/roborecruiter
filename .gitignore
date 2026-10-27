@@ -1,3 +1,15 @@
 .agents
 .claude
 skills-lock.json
+
+# Private applicant data - never committed. One root per user (ADR 0011).
+users/
+
+# Local snapshots and archives
+repo.zip
+*.zip
+
+# Database and generated artifacts
+*.db
+*.db-wal
+*.db-shm

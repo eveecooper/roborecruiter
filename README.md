@@ -1,62 +1,79 @@
 # roborecruiter
 
-An assisted job application pipeline. It prepares the application materials for a job opening and
-hands you the steps that need a person: the review gates, any verification challenge, and the final
-submit button. Later it learns to find the openings too.
+An assisted job application pipeline. It prepares the materials for a job opening and hands you the
+steps that need a person: looking over the draft, and the submit button. Later it learns to find the
+openings too.
 
 **Status:** planning. No application code yet.
-**Next:** Phase 1, which applies to postings you bring it.
-**Pilot for Phase 2:** ZIP 94085, 5-mile radius, front-of-house roles (server, host, busser).
+**Next:** stage 1, step 1.0.
 
 ## Documentation
 
 | Document | For | Read it for |
 | --- | --- | --- |
-| [Product overview](docs/planning/00-product-overview.md) | Anyone | What this is, what it deliberately will not do, and where it is weak |
-| [Engineering plan](docs/planning/01-engineering-plan.md) | Building it | Scope, stage design, milestones, and what "done" means at each one |
-| [Open investigations](docs/planning/02-deferred-investigations.md) | Building it | The questions that are still unanswered, and who answers them |
-| [Review log](docs/planning/03-review-log.md) | Curious why | What changed in the plan and the reasoning behind it |
-| [Decisions](docs/adr/) | Building it | One record per significant decision |
-| [Agent materials](docs/agent/) | Coding agents only | Context an agent needs before it can read the above correctly |
+| [Build plan](docs/planning/10-build-plan.md) | Building it | The six stages, the seams, and what "done" means at each step. **The one to follow.** |
+| [Feature inventory](docs/planning/12-feature-inventory.md) | Anyone | Every requested feature and the stage it arrives in |
+| [Open investigations](docs/planning/11-investigations.md) | Building it | The questions still unanswered, what each gates, and who answers them |
+| [Discovery notes](docs/planning/13-discovery-notes.md) | Stages 1, 3, 4 | Careers-page outcomes, block detection, Overture facts and licence obligations |
+| [Coding standards](docs/agent/coding-standards.md) | Building it | How to write it: config over code, seams, profiles, tests, types |
+| [Development workflow](docs/agent/development-workflow.md) | Building it | How a request becomes a ticket becomes code |
+| [Decisions](docs/adr/) | Building it | One record per significant decision. 0002-0011 are the 2026-10-26 reset. |
+| [Review log](docs/planning/03-review-log.md) | Curious why | What changed in the plan and the reasoning |
+| [Agent materials](docs/agent/) | Coding agents only | Conventions an agent needs before reading the above |
 
 ## How it gets built
 
-Three phases in the [engineering plan](docs/planning/01-engineering-plan.md). Each one is useful on
-its own, and each step inside one ends in something runnable.
+Six stages. Each is usable on its own, and the order is what is cheapest to get right first.
 
-**Phase 1, Apply.** You paste a posting; it produces materials that trace to confirmed facts and an
-application sheet you submit yourself. Source-agnostic, so a restaurant posting and a software
-posting travel the same path.
+**1. First real application.** You paste a posting; a Word template fills from your profile; you edit
+the document freely; the terminal walks you through sending it; the record stores the hash of the
+file that actually went out. **No model and no network code** — both asserted in CI. Done when one
+real application has been sent.
 
-**Phase 2, Discover.** Finds the postings for you, around a ZIP code. This is where the two
-validation spikes live: one checks whether the employer data source actually finds local
-restaurants, the other whether careers pages can be detected without silently discarding real
-openings. Both are assumptions capable of invalidating automated discovery, so they are tested
-before the crawl infrastructure is built on them. A third measurement asks whether the postings
-exist at all, because the first two can pass while the pipeline returns nothing.
+**2. Repeatable.** A batch review file, several job families you write by hand, duplicate prevention,
+stale-posting handling, and a view of what is new since the last run. Still offline.
 
-**Phase 3, Generalize.** Other ways of assembling an employer set, description-level matching, more
-job types, and eventually verticals that are not geographic. Prefill and writer models are here too.
+**3. Source policy, then the first fetch.** The source-policy decision comes first and gates every
+fetch after it. Then one or two permitted posting sources.
 
-Why this order rather than building discovery first: [ADR 0001](docs/adr/0001-phased-delivery.md).
+**4. Discovery.** The employer list generated from map data and pruned by you, careers-page checks,
+distance and pay filters.
 
-## Before Phase 1 starts
+**5. Model-assisted curation.** Per-posting tailored documents, fit scoring, job-family clustering,
+style profiles, writing in your voice from your own samples, cost caps and caching.
 
-- Investigation G (effort instrumentation) is open and blocks step 1.4. It is small.
-- A base resume, cover letter, experience file, and timeline need to exist as input.
+**6. Evidence-gated.** Email response tracking, follow-up reminders, an optional web interface.
+Browser prefill only if the data justifies it and Investigation C clears it.
 
-## Before Phase 2 starts
+Why applying comes before discovering: [ADR 0001](docs/adr/0001-phased-delivery.md). Why the model
+work comes late: [ADR 0005](docs/adr/0005-stage1-no-model-no-network.md).
 
-- Investigation D (source policy) is open and blocks every fetch in the phase.
-- The Overture `basic_category_allow` list needs filling from the pinned taxonomy release.
-- A current-year extract of the Santa Clara County permit data needs confirming as downloadable.
+## Before you start
+
+- **Nothing blocks stages 1 and 2.** No open investigation needs answering first.
+- Your facts need to exist as `config/profile.yaml`. It gets drafted in conversation from your old
+  resumes and notes rather than by code.
+- A Word template for the resume, and one for the cover letter.
+
+## Before stage 3
+
+- **Investigation D (source policy) is open and gates every fetch**, structured job-board APIs
+  included. It is the one question routed to outside expertise.
+- The candidate job sources are unverified — nobody has called an endpoint yet.
 
 ## Rules the system follows by design
 
-Not preferences, and not negotiable for convenience:
+Not preferences, and not negotiable for convenience. Reasons are in the build plan's
+[non-goals](docs/planning/10-build-plan.md#non-goals).
 
-- No evading bot detection, solving CAPTCHAs, or ignoring `robots.txt`. Challenges go to you.
-- No automated access to Indeed or any source whose terms forbid it. Manual paste only.
-- No code path can submit an application. You press submit.
+- **No code path can submit an application. You press submit.** CI asserts it.
+- No evading bot detection, solving CAPTCHAs, or ignoring `robots.txt`. Challenges go to you (human user).
+- No direct automated access to Indeed, or to any source whose terms forbid it. Running an
+  open-source scraper locally counts as direct access. Whether a third party could supply
+  Indeed-sourced postings lawfully is [Investigation H](docs/planning/11-investigations.md) — open,
+  and a last resort.
 - Materials use only facts you have confirmed. Anything unverifiable is flagged, never invented.
-- One application per posting unless you deliberately press Resubmit.
+- One application per posting unless you deliberately resubmit.
+- Nothing is fetched before the source policy exists.
+- One applicant at a time. Data is user-scoped so a second person costs a directory, but there is no
+  authentication, no hosting, and no concurrent use.

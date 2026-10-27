@@ -1,0 +1,5 @@
+# roborecruiter - top level
+# Only setting here is which user data root to use by default.
+# Override per command with: rr --user <name>
+schema: 1
+default_user: cooper-evelyn

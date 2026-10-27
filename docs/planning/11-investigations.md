@@ -1,29 +1,118 @@
 ---
-doc: open-investigations
-status: open-items
-derived_from: 01-engineering-plan.md
+doc: investigations-index
+status: index
+briefs: inline, below the status table
+revision: 2026-10-26
 ---
 
-# Open Engineering Investigations
+# Open Investigations
 
-> **Open questions.** An item here is undecided on purpose, and no answer should be inferred
-> from any other document. Each brief names who should answer it, what it unblocks, and what it
-> costs to keep deferring it.
+> **Status table plus the full briefs**, in one file. The table records what each investigation
+> gates after the 2026-10-26 restage; the briefs below it are unedited as written 2026-09-21.
+>
+> **No brief has been answered, and none is yours to answer.** Several are routed to outside
+> expertise on purpose. Picking a reasonable-sounding answer defeats the point of deferring it:
+> flag the question and say plainly that it is unresolved.
 
-Phasing changed which of these are urgent. D no longer blocks the project, only Phase 2. F no longer
-blocks materials, because Phase 1 does not hand-edit documents. G moved forward, because effort
-instrumentation now lands in Phase 1 rather than last. See
-[ADR 0001](../adr/0001-phased-delivery.md) and Review 4.
-
-| Brief | Question | Unblocks | Status |
+| Brief | Question | Gates | Status |
 | --- | --- | --- | --- |
-| A | Discovery-noise threshold | Step 2.1 exit, discovery config | Deferred - needs step 2.1 data |
-| B | Cross-source entity-resolution threshold | Auto-merge policy | Deferred - needs a second source |
-| C | Browser-prefill submit boundary | Phase 3 prefill adapters | Deferred - needs Phase 1 complete |
-| D | Source policy: crawler identity, robots vs. ToS, retention | Step 2.0, and every fetch after it | **Blocks all of Phase 2. Does not block Phase 1.** |
-| E | Hiring-platform census | Step 2.2 exit and the adapter build list | Open at step 2.2 |
-| F | Claim-check feasibility without a model | Span-level claim detection, if it is ever built | Deferred - decision 34 removes the dependency |
-| G | Effort instrumentation and its statistics | Step 1.4 acceptance criteria | **Open now - blocks step 1.4** |
+| A | Discovery-noise threshold | Stage 4 discovery config | **Dormant, reopens at stage 4.** Not applicable only while the employer list is hand-pruned. |
+| B | Cross-source entity-resolution threshold | Automatic employer merge | Deferred — needs a second place source. |
+| C | Browser-prefill submit boundary | **All of stage 6 prefill** | Open. The explicit gate: its hostile-form suite and its ruling on employer-visible partial applications are prerequisites, not formalities. |
+| D | Source policy — crawler identity, robots vs. terms, snapshot retention | **All of stage 3 and every fetch after it** | Open. Step 3.0 *is* this answer. Nothing in stages 1–2 fetches anything, so leaving it open costs nothing now. |
+| E | Hiring-platform census | Which stage 3 adapters get built | Open. Now answered as a byproduct of the `channel` column rather than as a scheduled study. |
+| F | Claim-check feasibility without a model | Span-level claim detection, if ever built | Open and **blocking nothing**. Relevant again because hand-editing returned, but provenance is advisory. |
+| G | Effort instrumentation and statistics | Stage 2 effort *reporting* | Open. Stage 1 records raw channel and elapsed time; distributions wait for G. |
+| H | Indeed-sourced postings via a third party | Whether Indeed coverage is reachable at all | Open. **Last resort by the owner's explicit framing** — considered only if permitted sources prove insufficient. |
+
+## What changed on 2026-10-26
+
+- **D stopped blocking the project and started gating stage 3 only.** The previous plan had it
+  blocking all of discovery, which deadlocked because its named owner is outside counsel. Stages 1
+  and 2 contain no network code — asserted in CI — so the question can stay open while real work
+  continues.
+- **A went dormant rather than closed.** The 80%-recall gate, the permit-frame answer key and the
+  Wilson-interval discipline existed because an unsupervised pipeline cannot know what it silently
+  missed. A generated employer list that a person reads and prunes needs no threshold. The moment
+  Overture lands in stage 4, A reopens.
+- **F became relevant again.** Decision 34 had removed hand-editing, which removed the free prose a
+  detector would scan. Hand-editing is back (ADR 0002), so the question returns — but provenance is
+  advisory rather than enforced, so nothing waits on it.
+- **G was downgraded from blocking step 1.4 to gating stage 2 reporting.** Stage 1's exit criterion
+  is that the record names the file that went out, which needs no timing convention.
+- **E stopped being a study.** The `channel` column (`email` / `form` / `portal:<name>` / `indeed`)
+  plus `submit_seconds` produce the census from real use.
+
+## What is not an investigation
+
+These are settled and not reopenable by a scope or style argument:
+
+- No code path may submit an application.
+- No bot-detection evasion, CAPTCHA solving, or proxy rotation.
+- **No direct automated access to Indeed.** Investigation H asks whether a *third party* can supply
+  the data lawfully; it does not reopen scraping Indeed ourselves, and running an open-source scraper
+  locally is direct access with extra steps.
+- No claim in generated materials that does not trace to a confirmed fact.
+- Single applicant, local operation.
+
+---
+
+## Investigation H - Indeed-sourced postings through a third party
+
+**Added 2026-10-26** at the owner's request, who noted explicitly that this is a **last resort**.
+
+**Best owner:** whoever answers Investigation D - terms review - plus a documentation review of each
+candidate vendor. Not resolvable by an engineer reading a pricing page.
+
+**Start condition:** only after stages 3 and 4 have run and the permitted sources have demonstrably
+insufficient yield. Opening it earlier spends the review effort on a coverage gap that may not exist.
+
+**Unblocks:** whether Indeed-sourced postings are reachable at all. Nothing else; this is a coverage
+expansion, not a dependency.
+
+**Cost of deferring:** none to the build. The cost is coverage - Indeed carries a large share of the
+hourly market, so postings that exist only there stay invisible unless pasted by hand, which already
+works.
+
+**Question:** Can postings that originate on Indeed be obtained lawfully through a third-party
+service, and under what terms?
+
+**What this does and does not ask.** It asks whether a vendor who already holds the data can license
+it to a single local user. It does **not** ask whether we may scrape Indeed, directly or through an
+open-source tool - running `python-jobspy` or an equivalent against Indeed from this machine is
+direct automated access and remains out of scope regardless of what this brief concludes.
+
+**Work:**
+1. Separate candidate sources into three kinds, because they carry different answers: vendors with
+   **licensed or contributed** data; vendors who **scrape** and resell; and open-source scrapers.
+   The third kind is out of scope by the paragraph above. The second kind moves the violation rather
+   than removing it, and whether that matters legally to the buyer is a question for counsel, not an
+   assumption to make either way.
+2. For each remaining candidate, obtain **written documentation of how it collects**. A vendor who
+   will not describe its collection method answers the question by declining.
+3. Check the vendor's own terms for whether a single-applicant local tool is a permitted use, and
+   whether derived application materials are a permitted output.
+4. Check Indeed's current terms for what they say about third-party redistribution of their listings.
+5. Record cost against measured benefit: how many *additional eligible* postings the source produces
+   beyond the permitted sources, not how many postings it has.
+
+**Deliverable:** a short ADR that either admits one named source with its terms and collection method
+cited, or records that none qualified and why. Either outcome closes the brief.
+
+**Acceptance:** no source is used without written documentation of how it collects its data, and the
+decision names the specific clause it relies on.
+
+**Note on precedent:** every widely used open-source tool in the "search jobs by title near me"
+category scrapes Indeed or LinkedIn, which is why this project's restrictions leave it without an
+off-the-shelf option. That absence is the reason this brief exists rather than a reason to relax the
+rule.
+
+---
+
+# The briefs
+
+Unedited, as written 2026-09-21. Each names who should answer it, what it unblocks, and what it
+costs to keep deferring. Their *status* is the table above; the questions themselves are unchanged.
 
 ## Investigation A - Discovery-noise threshold after step 2.1
 

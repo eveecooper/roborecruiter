@@ -12,8 +12,8 @@ reviews: 01-engineering-plan.md
 
 ## Review 1 - 2026-09-20
 
-**Scope:** [the engineering plan](01-engineering-plan.md) at draft 2, and
-[the open investigations](02-deferred-investigations.md).
+**Scope:** the engineering plan at draft 2, and
+the open investigations.
 
 **Method:** documentary review plus verification of the external facts the plan depends on. Claims
 were checked against source documentation rather than accepted, because several load-bearing facts
@@ -284,3 +284,233 @@ A snapshot, not a live list - the root README carries the current status.
 - `basic_category_allow` is empty and must be filled from the pinned taxonomy release before Phase 2.
 - A current-year extract of the county permit data has not been confirmed downloadable.
 - Non-posting outcomes and repeat-run behaviour are open discussions with no leaning recorded.
+
+## Review 5 - 2026-10-26
+
+A reset rather than a review. The planning documents were restructured, nine decisions were
+reversed or added as ADRs 0002-0010, and delivery was restaged from three phases into six stages.
+Triggered by the owner asking why hand-editing was forbidden, and by an information-overload
+complaint about the size of the engineering plan.
+
+### What was wrong
+
+**Hand-editing was banned to protect an untestable criterion.** Decision 34 forbade editing a
+generated document, citing claim provenance. The real cause is recorded in Investigation F's own
+brief: draft 2 required every objective claim in every document, including edited ones, to trace to
+a confirmed fact, which needs claim extraction from prose, which needs a model Phase 1 refused to
+use. The criterion could not be met or tested, so the previous draft removed its subject rather than
+answering the question. ADR 0002 withdraws the criterion instead.
+
+**The pipeline halted at three gates.** The owner's objection is the resulting rhythm - wait, act
+briefly, wait again. That is the design rather than an accident of it, so ADR 0003 replaces the gates
+with a run that never halts and a human queue drained in one sitting.
+
+**A UI was mandatory.** The Streamlit console was a required step 1.3 deliverable. ADR 0004 makes
+files authoritative and a UI permitted only where it reduces required actions.
+
+**The largest unvalidated component came first.** Two drafts of this reset put `rr distill`, reading
+an unbounded `knowledge/` folder, between the owner and their first application. ADR 0005 moves it
+to stage 5 and keeps a model out of stage 1 entirely.
+
+### Findings applied
+
+- Delivery restaged as six stages: first application (offline), repeatable (offline), source policy
+  then first fetch, discovery, model-assisted curation, evidence-gated extras.
+- Nine ADRs written, 0002 through 0010. ADR 0001 retains its one surviving point.
+- `10-build-plan.md` becomes the document to follow. `11-investigations.md` indexes A-G status.
+  `12-feature-inventory.md` maps every requested feature to a stage.
+- `00` and `01` deleted; their load-bearing content extracted to `13-discovery-notes.md` first. The
+  A-G briefs from `02` were merged into `11-investigations.md` unedited. All three remain in git
+  history. An intermediate step in this same review moved them to a `reference/` folder; that folder
+  was then deleted, because storing a superseded document elsewhere is not a reason to keep it.
+- `docs/agent/coding-standards.md` written: configuration over code, config profiles rather than
+  branches, one seam per swappable thing, fakes at every seam, structured logs.
+- Eight data items identified as unretrofittable and scheduled for step 1.0: version stamps
+  including `output_schema_version`, full posting text, per-posting family assignment history,
+  `careers_check` as append-only rows, a source-neutral `employers.yaml`, `schema:` integers,
+  resolved application mode, and `content_hash` plus `updated_at` on round-trip files.
+- Model pricing re-verified 2026-10-25. An earlier draft used $3/$15 for Sonnet, which is Sonnet
+  4.6; Sonnet 5 is $2/$10. Corrected figures: Haiku 4.5 $0.16, Sonnet 5 $0.32, Opus 5 $0.80, Fable 5
+  $1.60 per twenty-posting run.
+
+### Reviewed by subagents
+
+`bob` (scope) and `tbro` (feasibility) each reviewed three successive drafts. Their findings changed
+the plan rather than confirming it:
+
+- Browser form fill deferred. `bob`: attaching a resume or completing step one persists state the
+  employer can see with no submit event to detect, so the boundary is per-portal, not a property of
+  the code - and building it means deleting the submission-safety CI assertion on day one. `tbro`:
+  3/10 feasible for arbitrary sites, 7/10 for one hand-picked platform, and no prior art exists for
+  prefill with a proven no-submit boundary.
+- The discovery coverage spike deleted as not applicable, because a hand-pruned employer list
+  measures itself. **Nothing replaced the deleted matching spike**, which is recorded as a known gap.
+- `tbro` corrected a claim this review had made: stable family IDs do **not** make scores comparable,
+  because the profile, prompt and model drift beneath the stable label. Hence the version stamps.
+- `tbro` corrected the clustering feedback claim. Distill reads a folder, not usage, so "it improves
+  as I use it" is true for matching and curating and false for clustering. The fix is per-posting
+  assignment history plus skip reasons, both now scheduled.
+- `bob` identified that board APIs are still fetches, so ADR 0006 gates every fetch rather than only
+  crawling.
+- `tbro` rated the YAML-database sync the highest-risk item relative to its apparent size, and
+  supplied the single-owner design in ADR 0009.
+
+### Deliberately not changed
+
+- **Every investigation A through G stays open and unanswered.** An earlier draft of this reset
+  closed A as not-applicable and D by self-authored ADR; both were reverted. A is dormant and
+  reopens when Overture lands at stage 4. D gates stage 3 and nothing before it, so it costs nothing
+  to leave to counsel. F became relevant again when hand-editing returned but blocks nothing. G was
+  downgraded from blocking a step to gating stage 2 reporting.
+- **The no-submit rule and its CI assertion.** Not negotiable, and the browser-prefill reframing was
+  rejected partly because it would have required rewriting the assertion.
+- **The careers-page six-outcome enum, block detection, and the 30-employer answer-key discipline.**
+  Reviews 1 and 2 got these right; they move to stage 4 unchanged.
+- **The restaurant vertical as the starting point.** Still the easiest employer set to enumerate by
+  location.
+- **Reviews 1 through 4 are kept as written**, including the passages this reset reverses.
+- `tbro-stack-log.md` was **not** edited. It belongs to that subagent, which could not write during
+  plan mode. Its pending rows are listed in `10-build-plan.md` and need a `tbro` invocation to apply:
+  Alembic from step 1.0, Pydantic, `instructor` or `pydantic-ai`, a hosted model API, `count_tokens`,
+  Jinja2 autoescape, `ruamel.yaml`, `adjusted_rand_score`, CareerOneStop/NLx, USAJOBS, Adzuna,
+  Greenhouse/Lever/Ashby board endpoints, llama.cpp with GBNF, and Streamlit returning to *proposed*.
+
+### Open as of this review
+
+A snapshot, not a live list.
+
+- **Nothing replaced the matching spike.** Stage 4's gate arrives unmeasured with three times the
+  surface of the single score it replaces.
+- **Walk-in and instructions-only employers have no destination.** Two of six careers-page outcomes
+  fall out of the pipeline. Open in the previous plan, deliberately not carried into this one, needs
+  a decision by stage 4.
+- **Filters beyond distance and compensation are unspecified** - schedule, seniority, remote/hybrid
+  were named in planning and not scoped.
+- **Every cross-employer posting source is unverified.** CareerOneStop and the National Labor
+  Exchange, USAJOBS, and Adzuna are all from recall; no endpoint has been called. Title search across
+  employers not individually named may have no permitted source at all.
+- **Eligibility is rules evaluated over a model's extraction**, so it inherits that extractor's
+  recall. Recorded in ADR 0008 rather than hidden.
+- Overture schema and taxonomy state is still unverified and moves on a quarterly cycle.
+- No code exists. The next step is step 1.0.
+
+### Addendum, same day - Investigation H added
+
+The owner reopened the Indeed question after this review was written: a third-party service or
+open-source tool supplying Indeed-sourced postings is worth considering, noted explicitly as a
+**last resort**.
+
+Recorded as **Investigation H** rather than as a rule change, because the question needs a terms and
+collection-method review that nobody here can perform. The rule that stands unchanged is **no direct
+automated access to Indeed**, and the brief states plainly that running an open-source scraper
+locally is direct access with extra steps rather than an exception to it. Only a third party holding
+licensed or otherwise lawfully collected data is a genuinely different option.
+
+H's start condition is after stages 3 and 4 demonstrate insufficient yield from permitted sources,
+so it blocks nothing and costs nothing to leave open. Six files were brought into agreement:
+`10-build-plan.md` non-goals, `11-investigations.md`, `12-feature-inventory.md`, ADR 0006,
+`README.md`, and the `rr-refresh` skill. The non-goal bullet had been removed from the build plan and
+the README earlier in the day; it is restored in its narrower and accurate form.
+
+### Addendum, same day - user-scoped data roots, and two wish-list features placed
+
+**ADR 0011: data is user-scoped.** The owner had prepared a folder per user, which contradicted the
+standing "one applicant, local files" non-goal as written. The two things that non-goal conflated are
+now separated: **path layout is nearly free; multi-user operation is not.** A `--user` flag selects a
+data root, each user gets their own directory and their own SQLite file, and the non-goal is narrowed
+to name what it actually excludes - no authentication, no hosting, no concurrent use by different
+people, no rate limiting that reasons across applicants.
+
+One database per user rather than a `user_id` column, because separate files make isolation
+structural: no query can forget a filter and nothing can leak through a bug. A discriminator column
+would charge every query in the codebase, forever, for cross-user features this project has declared
+a non-goal.
+
+The data root became the **ninth** unretrofittable item - it is the only one that is layout rather
+than data, and changing it later means moving every file and rewriting every recorded path, including
+hashes stored against already-sent applications.
+
+**Two features placed from the wish list.** A **skill-gap report** at stage 5: each `Fit.reasons`
+entry already carries a claim and whether it resolved to a fact ID, so an unresolved claim is a
+labelled gap and aggregating them is a group-by rather than a model call. Every row traces to a real
+posting, which is what keeps it from being generic. A **career coaching plan** at stage 6,
+evidence-gated: turning that report into actionable advice needs a model and the output is
+unverifiable, so it is built only if the deterministic report proves insufficient and is reported as
+suggestion rather than assessment.
+
+### Addendum, same day - plan audit after building step 1.0
+
+The owner asked for a check that everything discussed had actually reached the planning documents,
+and set the working agreement explicitly: **a request is placed in the plan before it is built** -
+assigned a stage, or deferred with a reason.
+
+The audit found two gaps, one of them caused by this session.
+
+**Personas were built before being planned.** A `personas:` block was added to `profile.yaml` and
+persona resolution to `config.py` during step 1.0, and the word appeared in no planning document.
+A grep seemed to find it in the feature inventory, but that was a false positive on "personal
+tools". Now recorded: a Personas section in the build plan, a feature-inventory row, and a
+paragraph in ADR 0011 distinguishing a persona from a user - one person's presentations share a
+data root, where different people do not.
+
+**The development workflow never left the scratch plan file.** Written up as
+`docs/agent/development-workflow.md`: the plan is the delegation and no project-manager agent is
+needed, the role-to-skill mapping, why adding agents increases token use rather than reducing it,
+what makes a step land in few iterations, and the request-placement rule above.
+
+**Type checking had been dropped without a decision.** The previous engineering plan specified
+strict checking with mypy or pyright; the rewritten coding standards omitted it and `pyproject.toml`
+had no checker configured. Noticed only because the editor raised it. Now Pyright in `basic` mode,
+recorded in the coding standards with the reason strict was rejected - it demands annotations for
+third-party internals this project does not own, and an unread checker is worth nothing.
+
+Everything else discussed in this session was already recorded: the skill-gap report and career
+coaching plan, the per-document-type voice manifest, Investigation H, user-scoped data roots, and
+config profiles.
+
+---
+
+## Step 1.1 built - 2026-10-26
+
+Not a review. A build record, kept here because the planning documents are the project's memory and
+two of these findings change how the next ticket is written.
+
+`rr add` ships: paste a URL and posting text, get a posting row carrying the full text and a content
+hash, plus a `posting.md` under `users/<user>/applications/<id>-<slug>/`. 42 tests pass; ruff and the
+five safety assertions are green. Nothing new was planned - step 1.1 was already specified - but the
+feature inventory gained the row it should have had, since manual intake is a posting source rather
+than a special case.
+
+**The safety assertion collided with the ORM, and the assertion won.** SQLModel's query method is
+`session.exec(...)`, which `tests/test_safety.py` flags as dynamic execution. That file's own
+docstring says to fix the code rather than relax the test, so queries here use SQLAlchemy's
+`session.scalars(...)` instead. **That is now the convention for every query in this codebase.** A
+compiled regex object was dropped for the same reason, `compile(` being on the same list. No
+exemption was argued and no assertion was touched. Recorded because the next person to write a query
+will reach for `.exec()` and get a red run with a confusing reason.
+
+**Three defects were found by running the command, not by the tests.** All three are now covered.
+The repeat path ignored an explicitly passed `--employer` while the command's own output told the
+applicant to pass exactly that to correct a guess. The repeat path also reported "nothing changed"
+while changing a field. And `posting.md` was rewritten only when the posting *text* changed, so a
+corrected employer left the file disagreeing with its row permanently - and because nothing
+downstream reads that file back, the disagreement was silent. `posting.md` is now reconciled against
+the row on every add, self-healing rather than conditional.
+
+**Title and employer are flagged guesses rather than required arguments**, per
+[ADR 0003](../adr/0003-batch-over-gates.md): the title is the first non-blank line and the employer
+comes from the link's host. The employer guess is wrong by construction on hosted boards -
+`jobs.lever.co/acme` yields "lever" - which is why the command prints what it guessed and how to
+correct it.
+
+**Deliberately not changed.** `rr add` accepts `--profile` and does nothing with it; the uniform
+`--user`/`--profile` interface is specified for every command in the build plan, and adding the flag
+later would change the command's surface. **Pyright is not run in CI** - the coding standards name it
+as the checker "so the editor and CI agree", `.github/workflows/ci.yml` runs ruff, the safety
+assertions and pytest only, and the tool is not installed in the project environment. A documented
+standard the pipeline does not enforce, recorded rather than fixed in passing.
+
+**Unverified.** "Several pasted postings are on disk and in the database" is demonstrated in the test
+suite, not in the owner's own data root, which holds one posting - the one supplied. The dedupe keys
+are URL then text hash; cross-source duplicate detection is stage 3 and Investigation B's threshold
+does not apply here.
