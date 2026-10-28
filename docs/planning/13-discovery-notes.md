@@ -102,6 +102,11 @@ Every Posting has an internal canonical ID. A `PostingSourceRef` stores provider
 immutable snapshot hash, and a platform-native posting ID where one exists — board adapters use the
 stable native ID rather than URL text as primary source identity.
 
+**In stage 1 the native ID lives on the posting row as `source_posting_id`**, captured by
+`rr add --job-id` or guessed from the link, because it is unretrofittable and one posting has exactly
+one source until stage 3. `PostingSourceRef` arrives with the second source, and the column migrates
+into it. Scoped per employer: a job ID is unique within one hiring system, not globally.
+
 For sources without a native ID, derive a candidate fingerprint from normalized employer location,
 title, job location, canonicalized URL, and source snapshot. **Low-confidence cross-source matches
 are flagged as likely duplicates rather than merged automatically** (Investigation B sets the

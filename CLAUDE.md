@@ -10,6 +10,8 @@ An assisted job application pipeline. Planning stage - no application code exist
   question is listed there, it is undecided on purpose.
 - `docs/planning/12-feature-inventory.md` - every requested feature and the stage it arrives in.
   The quickest answer to "when do I get X".
+- `docs/planning/14-progress.md` - what is built, what is next, how far each stage has got.
+  **Status only; update it in the same session the code lands.** The build plan defines the steps.
 - `docs/agent/coding-standards.md` - how to write the code. Read before any build ticket.
 - `docs/agent/development-workflow.md` - how a request becomes a ticket becomes code.
 - `docs/adr/` - outranks the planning documents, on the decision each ADR records. 0002 through

@@ -47,22 +47,49 @@ def _resolve_or_exit(user: str | None) -> paths.DataRoot:
 
 
 def _require_migrated(root: paths.DataRoot) -> None:
-    """Stop with an instruction rather than a driver error on an un-migrated database."""
-    engine = db.engine_for(root.database)
-    try:
-        tables = set(inspect(engine).get_table_names())
-    finally:
-        engine.dispose()
-    if "postings" not in tables:
+    """Stop with an instruction rather than a driver error on an un-migrated database.
+
+    The missing-file case is answered without connecting, because SQLite creates the file on
+    connect and a check that writes would leave a stray empty database behind every mistyped
+    `--user`.
+    """
+
+    def _refuse() -> None:
         typer.secho(
             f"No tables in {root.database}.\nRun:  uv run alembic -x user={root.user} upgrade head",
             fg=typer.colors.RED,
         )
         raise typer.Exit(1)
 
+    if not root.database.exists():
+        _refuse()
 
-def _posting_text(file: Path | None) -> str:
-    """The pasted posting, from a file or from standard input."""
+    engine = db.engine_for(root.database)
+    try:
+        tables = set(inspect(engine).get_table_names())
+    finally:
+        engine.dispose()
+    if "postings" not in tables:
+        _refuse()
+
+
+def _is_interactive() -> bool:
+    """Whether a person is typing at this command rather than a pipe feeding it."""
+    return sys.stdin.isatty()
+
+
+_END_OF_PASTE = "Ctrl+Z then Enter" if sys.platform == "win32" else "Ctrl+D"
+
+
+def _posting_text(text: str | None, file: Path | None) -> str:
+    """The posting, from an argument, a file, or whatever is pasted at the prompt.
+
+    Pasting is the default because it is the fewest actions: one command, one paste, one
+    keystroke to end it, and no intermediate file to save and then name.
+    """
+    if text:
+        return text
+
     if file is not None:
         try:
             return file.read_text(encoding="utf-8")
@@ -70,13 +97,11 @@ def _posting_text(file: Path | None) -> str:
             typer.secho(f"Cannot read {file}: {exc}", fg=typer.colors.RED)
             raise typer.Exit(1) from exc
 
-    if sys.stdin.isatty():
+    if _is_interactive():
+        # Without this the terminal looks hung, because the command is simply waiting on input.
         typer.secho(
-            "No posting text. Either pass --file <path>, or pipe the text in:\n"
-            '  Get-Content posting.txt | rr add "<url>"',
-            fg=typer.colors.RED,
+            f"Paste the posting, then press {_END_OF_PASTE} to finish:", fg=typer.colors.CYAN
         )
-        raise typer.Exit(1)
     return sys.stdin.read()
 
 
@@ -85,8 +110,12 @@ def add(
     url: Annotated[
         str | None, typer.Argument(help="The posting's link. Tracking parameters are stripped.")
     ] = None,
+    text: Annotated[
+        str | None,
+        typer.Argument(help="The posting text. Omit it to paste at the prompt instead."),
+    ] = None,
     file: Annotated[
-        Path | None, typer.Option("--file", "-f", help="File holding the pasted posting text.")
+        Path | None, typer.Option("--file", "-f", help="File holding the posting text.")
     ] = None,
     title: Annotated[
         str | None,
@@ -95,24 +124,36 @@ def add(
     employer: Annotated[
         str | None, typer.Option("--employer", "-e", help="Employer. Guessed from the URL host.")
     ] = None,
+    job_id: Annotated[
+        str | None,
+        typer.Option(
+            "--job-id",
+            "-j",
+            help="The employer's own posting ID. The strongest duplicate check: pass it.",
+        ),
+    ] = None,
     user: UserOption = None,
     profile: ProfileOption = config_mod.DEFAULT_PROFILE,
 ) -> None:
     """Take a posting in by hand: store the full text and write `posting.md`.
 
-    Fetches nothing - the text is pasted. Re-adding the same posting is recognised rather than
+    Fetches nothing - the text is pasted. Run it with just the link and paste at the prompt; the
+    job ID, title and employer are read out of the posting where it labels them, so there is
+    usually nothing else to type. Re-adding the same posting is recognised rather than
     duplicated, so running this twice is safe.
     """
     root = _resolve_or_exit(user)
     _require_migrated(root)
 
-    text = _posting_text(file)
+    text = _posting_text(text, file)
     if not intake.normalize_text(text):
         typer.secho("The posting text is empty. Nothing added.", fg=typer.colors.RED)
         raise typer.Exit(1)
 
     with db.session_for(root) as session:
-        result = intake.add(session, root, url=url, text=text, title=title, employer=employer)
+        result = intake.add(
+            session, root, url=url, text=text, title=title, employer=employer, job_id=job_id
+        )
         posting = result.posting
         if result.created:
             typer.secho(f"Added #{posting.id}  {posting.title}", fg=typer.colors.GREEN)
@@ -127,12 +168,19 @@ def add(
             )
 
         typer.echo(f"employer  {posting.employer_name}")
+        typer.echo(f"job id    {posting.source_posting_id or '(none - pass --job-id)'}")
         typer.echo(f"folder    {result.folder}")
         typer.echo(f"words     {len(posting.text.split())}")
         if result.guessed:
             typer.secho(
                 f"guessed   {', '.join(result.guessed)} - check it, and pass "
-                "--title/--employer to correct it",
+                "--title/--employer/--job-id to correct it",
+                fg=typer.colors.YELLOW,
+            )
+        if result.job_id_conflict:
+            typer.secho(
+                f"conflict  the link says job ID {result.job_id_conflict}, the posting text says "
+                f"{posting.source_posting_id}. Used the posting's. Pass --job-id to settle it.",
                 fg=typer.colors.YELLOW,
             )
 

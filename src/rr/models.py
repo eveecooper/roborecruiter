@@ -82,8 +82,16 @@ class Posting(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     employer_id: int | None = Field(default=None, foreign_key="employers.id", index=True)
     employer_name: str
+    #: `employer_name` reduced to letters and digits. The duplicate key is scoped by employer and
+    #: the name is a correctable guess, so the key cannot depend on how it was spelled.
+    employer_key: str = Field(index=True)
     title: str
     url: str | None = Field(default=None, index=True)
+
+    #: The employer's own identifier for this opening - IBM's 132846, Greenhouse's `gh_jid`. The
+    #: one duplicate key that survives a rewritten URL and an edited body, so it is captured at
+    #: intake even though nothing enforces it until stage 3. Unique only within one employer.
+    source_posting_id: str | None = Field(default=None, index=True)
 
     #: The whole posting, verbatim. This is stage 5's corpus; a URL rots and a hash says nothing.
     text: str

@@ -106,7 +106,7 @@ varies by role belongs to the job family or the style profile, not here.
 
 | Command | Stage | Does |
 | --- | --- | --- |
-| `rr add <url>` | 1 | paste posting text → `posting.md` + a posting row with full text. No fetching. |
+| `rr add <url> [text] [--job-id]` | 1 | paste posting text → `posting.md` + a posting row with full text and the employer's own posting ID. Interactive paste by default, no file needed. No fetching. |
 | `rr draft [--all] [--mode] [--persona]` | 1 | fill template from profile → `.docx` → `.pdf` |
 | `rr submit [--all]` | 1 | terminal walkthrough: opens the posting, prints paths and copy-ready answers, records channel, elapsed time, file hashes |
 | `rr log` / `rr effort` | 1 / 2 | what was sent; where the minutes went |
@@ -159,9 +159,9 @@ capabilities satisfy the query. No registry, no mode classes. Greenhouse, Lever 
 `{REQUIRES_EMPLOYER_REF}` and nothing else; an aggregator would be `{SEARCH_BY_TITLE,
 SEARCH_BY_AREA}`. Overture populates no cell — it is a place source, not a posting source.
 
-## Nine things that are cheap now and unretrofittable later
+## Ten things that are cheap now and unretrofittable later
 
-Eight are data, one is layout. Each is something that cannot be backfilled without rewriting records
+Nine are data, one is layout. Each is something that cannot be backfilled without rewriting records
 that already exist.
 
 1. **Version stamps on every generated row** — `profile_version`, `prompt_version`, `model_alias`,
@@ -184,6 +184,14 @@ that already exist.
 9. **The user-scoped data root**, threaded from the CLI into anything that touches disk. Changing the
    layout later means moving every file and rewriting every recorded path, including the hashes
    stored against already-sent applications.
+10. **The employer's own posting ID** — `source_posting_id`, the number the hiring system uses for
+    this opening (IBM's `132846`, Greenhouse's `gh_jid`). It is the only duplicate key that is
+    stable when a URL is rewritten and the posting text is edited, and it is what makes
+    "have I already applied to this exact requisition at this employer" answerable. Backfilling it
+    means revisiting every posting by hand, so it is captured at intake even though nothing enforces
+    it until stage 3. Scoped per employer, because a job ID is unique only within one hiring system.
+    It lives on the posting row in stage 1 and migrates into `PostingSourceRef`
+    ([`13-discovery-notes.md`](13-discovery-notes.md)) when stage 3 gives one posting several sources.
 
 ## Matching
 
@@ -331,7 +339,7 @@ Worth stating plainly: quick-apply makes *drafting* cheap, and drafting was neve
 | Step | Deliverable | Exit criteria |
 | --- | --- | --- |
 | 1.0 | Repo, ruff, pytest, SQLModel + Alembic initial revision, the nine unretrofittable items, persona resolution, six-outcome enum, `schema:` loader check, config profiles, gitignore | CI green. Three assertions pass: no submit-capable path; no `httpx`/`requests`/`playwright` import; posting text never used as instruction, path, filename or shell argument. `alembic upgrade head` applies to an empty database. |
-| 1.1 | `rr add`: paste URL + posting text → `posting.md` and a posting row with full text. Batchable. | Several pasted postings are on disk and in the database; re-pasting the same URL does not create a second posting. |
+| 1.1 | `rr add`: paste URL + posting text → `posting.md` and a posting row with full text and the employer's posting ID. Batchable. **One command and one paste** — no intermediate file, and the job ID, title and employer are read out of the pasted text by rules where the posting labels them. | Several pasted postings are on disk and in the database. Re-pasting the same posting does not create a second one, caught by employer-plus-job-ID first, then URL, then text hash — so it holds even when the URL is rewritten and the text is edited. Adding a posting costs one command, one paste and one end-of-input keystroke, with no `--job-id` or `--title` typed when the posting labels them. |
 | 1.2 | `rr draft [--all]`: template fill from `config/profile.yaml` via docxtpl, pinned LibreOffice → PDF, render-time field allowlist, Jinja2 autoescape | A posting renders to `.docx` and `.pdf`. A field not declared by the template is refused. An edited file is never overwritten — `.v2` is written instead. |
 | 1.3 | `rr submit [--all]`: terminal walkthrough; records channel, elapsed time, and the hash of each file sent. `rr log`. | **One real application sent end to end, with `rr log` naming the hash of the file that went out.** |
 
@@ -396,6 +404,16 @@ byte-span provenance, a per-file byte cap, oversize files chunked deterministica
 never silently truncated). Deterministic merge, deduping by normalized text with no model. Three hard
 caps in `run.yaml`: max files, max bytes per file, max calls per run. A `count_tokens` dry-run that
 aborts rather than warns. Output is a **proposed diff** against `profile.yaml`, never a direct write.
+
+**Posting field extraction by model.** Stage 1 reads a posting's title and job ID from the labels
+the posting prints, by rule. That is cheap and it misses an unlabelled posting. Here a model
+extracts the structured fields — title, requisition ID, location, pay band, schedule, required
+certifications — into a closed schema with spans back into the text. It is the same extraction
+[ADR 0008](../adr/0008-eligibility-fit-preference.md) already depends on for eligibility, which is
+why it belongs in this stage rather than earlier: it arrives with the output schema, the field
+allowlist, the response cache and the hostile fixtures that make a model's output safe to act on.
+The rule-based reader stays as the fallback and as the comparison that says whether the model is
+worth its cost.
 
 Then fit scoring, family clustering as a proposed diff with stable IDs, response caching, call cap
 and dollar ceiling, the full injection suite, style profiles, parallel drafting, and a profile prune

@@ -30,6 +30,8 @@ columns are in place but no command uses them yet. Blank means planned, not star
 | --- | --- | --- | --- |
 | Apply to a posting, with a record of the exact file sent | 1 |  | |
 | Paste a posting in by hand (`rr add`) | 1 | built 1.1 | Manual intake is a posting source, not a special case ([ADR 0001](../adr/0001-phased-delivery.md)) |
+| Employer's own posting ID, per-employer duplicate check | 1 | built 1.1 | `--job-id`, or read from the pasted text, or from the link. The tenth unretrofittable item |
+| One command, one paste — no intermediate file | 1 | built 1.1 | Interactive paste is the default. Job ID and title read from the posting's own labels by rules, not a model ([ADR 0005](../adr/0005-stage1-no-model-no-network.md)) |
 | Hand-edit documents, never overwritten (`.v2`) | 1 | schema 1.0 | |
 | Hand-editable facts file (`config/profile.yaml`) | 1 |  | Written in conversation, not by code |
 | Area configurable | 1 | config 1.0 | `config/run.yaml`, the only place a ZIP appears |
@@ -64,6 +66,7 @@ columns are in place but no command uses them yet. Blank means planned, not star
 | Distance + compensation filters | 4 |  | |
 | Eligibility + preference matching (rules) | 4 |  | |
 | Manual override for low-scoring jobs | 4 |  | |
+| Posting fields extracted by a model, not by label rules | 5 |  | Asked for at stage 1; a model cannot ship there ([ADR 0005](../adr/0005-stage1-no-model-no-network.md)). Rule-based label reading stays as the fallback |
 | Fit matching (model), match grading | 5 |  | |
 | AI curation of per-posting tailored documents | 5 |  | |
 | Dump unfocused material → YAML (`rr distill`) | 5 |  | Per-file, capped, proposed diff |

@@ -12,6 +12,7 @@ from reading the documents.
 | Question | Document |
 | --- | --- |
 | How is it built, in what order, what does "done" mean? | [`10-build-plan.md`](../planning/10-build-plan.md) |
+| What is built, what is next, how far through a stage? | [`14-progress.md`](../planning/14-progress.md) - status only; the build plan says what a step contains |
 | When do I get feature X? | [`12-feature-inventory.md`](../planning/12-feature-inventory.md) |
 | Is this decided? | [`11-investigations.md`](../planning/11-investigations.md) - if it is listed there, no |
 | How do I write the code? | [`coding-standards.md`](coding-standards.md) |

@@ -29,6 +29,11 @@ from rr.paths import DataRoot
 _SLUG_DISALLOWED = r"[^a-z0-9]+"
 _SLUG_MAX = 48
 
+#: Query parameters that carry the employer's own posting ID. Checked in this order, so a link
+#: with more than one wins on the most specific. Guessing from the link is deliberate: forgetting
+#: to pass the ID is the expected human error, and a flagged guess beats a missing value.
+_JOB_ID_PARAMS = ("jobid", "gh_jid", "job_id", "requisitionid", "req_id", "reqid", "pid")
+
 #: Stands in when no employer can be worked out. A placeholder the applicant can see and fix
 #: beats inventing a name that would end up in a document.
 UNKNOWN_EMPLOYER = "unknown-employer"
@@ -41,6 +46,37 @@ _PUBLIC_SECOND_LEVEL = frozenset({"co", "com", "org", "net", "ac", "gov", "edu"}
 
 #: A guessed title longer than this is almost certainly a paragraph, not a title.
 _TITLE_MAX = 120
+
+#: Labels a careers page puts above the requisition number. Matched case-insensitively against a
+#: whole line, with the value either after a colon on the same line or on the next non-blank line.
+_JOB_ID_LABELS = (
+    "job id",
+    "job no",
+    "job number",
+    "job req id",
+    "requisition id",
+    "requisition number",
+    "requisition",
+    "req id",
+    "req no",
+    "req #",
+    "req",
+    "posting id",
+    "reference number",
+    "reference id",
+    "ref id",
+    "ref #",
+)
+
+#: Labels a careers page puts above the role name.
+_TITLE_LABELS = ("job title", "position title", "position", "job", "title", "role")
+
+#: Labelled fields sit in the header of a posting. Searching the whole body would match prose
+#: about how to apply and pick up a number that is not a requisition.
+_LABEL_SCAN_LINES = 25
+
+#: A value this long is prose that followed a label, not an identifier.
+_JOB_ID_MAX = 40
 
 #: Query parameters that identify where a link was copied from rather than which job it is.
 #: Dropping them is what makes the same posting reached from a search result and from a direct
@@ -78,6 +114,9 @@ class Intake:
     fields_changed: tuple[str, ...] = ()
     #: Fields filled by guess rather than given. Flagged so a wrong one is visible, per ADR 0003.
     guessed: tuple[str, ...] = ()
+    #: The link's job ID when it disagrees with the one the posting prints. Reported rather than
+    #: resolved: one of the two is wrong and only the applicant can say which.
+    job_id_conflict: str | None = None
 
 
 def content_hash(text: str) -> str:
@@ -115,13 +154,85 @@ def normalize_text(text: str) -> str:
     return "\n".join(line.rstrip() for line in lines).strip()
 
 
+def read_labelled_field(text: str, labels: tuple[str, ...]) -> str | None:
+    """The value of the first of `labels` that appears in the posting's header, if any.
+
+    Careers pages lay a posting out as a label and then its value - "Job ID" on one line and the
+    number on the next, or "Job ID: 132846" on one. Both forms are read. Only the first
+    `_LABEL_SCAN_LINES` lines are searched, because the same words appear in prose further down.
+
+    Rules, not a model: stage 1 ships neither a model nor network access
+    (docs/adr/0005-stage1-no-model-no-network.md), so a label the posting already prints is the
+    only reliable thing to read.
+    """
+    lines = [line.strip() for line in normalize_text(text).split("\n")]
+    header = lines[:_LABEL_SCAN_LINES]
+
+    for index, line in enumerate(header):
+        bare = line.rstrip(":").strip().lower()
+        for label in labels:
+            if bare == label:
+                # Label alone on its line: the value is the next line with anything on it.
+                for following in lines[index + 1 :]:
+                    if following:
+                        return following
+                return None
+            if bare.startswith(label):
+                remainder = line[len(label) :].lstrip(" :#\t-").strip()
+                if remainder:
+                    return remainder
+    return None
+
+
+def read_job_id(text: str) -> str | None:
+    """The requisition number the posting prints for itself, if it labels one."""
+    value = read_labelled_field(text, _JOB_ID_LABELS)
+    if not value or len(value) > _JOB_ID_MAX:
+        return None
+    # An identifier, not a sentence. Anything with spaces in it is the latter.
+    return value if value and " " not in value else None
+
+
 def guess_title(text: str) -> str:
-    """The first non-blank line. Job postings lead with the title far more often than not."""
+    """The role name: a labelled title if the posting prints one, else the first non-blank line.
+
+    The fallback is wrong on a posting whose first line is the word "Job Title", which is exactly
+    how a copied careers page tends to start - hence the labels first.
+    """
+    labelled = read_labelled_field(text, _TITLE_LABELS)
+    if labelled:
+        return labelled[:_TITLE_MAX]
     for line in normalize_text(text).split("\n"):
         candidate = line.strip().lstrip("#").strip()
         if candidate:
             return candidate[:_TITLE_MAX]
     return "untitled posting"
+
+
+def employer_key(employer: str) -> str:
+    """An employer name reduced to a comparable key: letters and digits, lowercased.
+
+    `ibm`, `IBM` and `I.B.M.` are one employer. The name itself is a guess the applicant can
+    correct, so the duplicate key must not depend on how it happened to be written.
+    """
+    return re.sub(r"[^a-z0-9]+", "", employer.lower())
+
+
+def guess_job_id(url: str | None) -> str | None:
+    """The employer's posting ID from the link's query string, if it is in there.
+
+    Query parameters only. A number sitting in a path segment is as likely to be a page index or
+    a category as a requisition, and a wrong ID is worse than none - it would group two unrelated
+    postings under one duplicate key.
+    """
+    if not url:
+        return None
+    params = {key.lower(): value for key, value in parse_qsl(urlsplit(url).query)}
+    for name in _JOB_ID_PARAMS:
+        value = params.get(name, "").strip()
+        if value:
+            return value
+    return None
 
 
 def guess_employer(url: str | None) -> str:
@@ -156,20 +267,17 @@ def add(
     text: str,
     title: str | None = None,
     employer: str | None = None,
+    job_id: str | None = None,
     source: str = "manual",
 ) -> Intake:
     """Record one pasted posting: a row carrying the full text, and a `posting.md` beside it.
 
-    A posting already known by URL or by text hash is updated rather than duplicated, so pasting
-    the same link twice is safe and says so. A missing title or employer is guessed and reported
-    rather than asked for, because no step of this pipeline halts for a person (ADR 0003).
+    A posting already known - by employer plus job ID, by URL, or by text hash - is updated
+    rather than duplicated, so pasting the same posting twice is safe and says so. A missing
+    title, employer or job ID is guessed and reported rather than asked for, because no step of
+    this pipeline halts for a person (ADR 0003).
     """
     canonical = normalize_url(url)
-    known = find_by_url_or_hash(session, url=canonical, text=text)
-    if known is not None:
-        return _seen_again(
-            session, root, known, url=canonical, text=text, title=title, employer=employer
-        )
 
     guessed: list[str] = []
     if not title:
@@ -178,10 +286,36 @@ def add(
     if not employer:
         employer = guess_employer(canonical)
         guessed.append("employer")
+    # The posting's own printed requisition number beats the one in the link: it is what the
+    # employer calls this opening. A link that disagrees is flagged, not silently discarded.
+    from_link = guess_job_id(canonical)
+    conflict: str | None = None
+    if not job_id:
+        job_id = read_job_id(text) or from_link
+        if job_id:
+            guessed.append("job_id")
+    if from_link and job_id and from_link != job_id:
+        conflict = from_link
+
+    known = find_existing(session, url=canonical, text=text, employer=employer, job_id=job_id)
+    if known is not None:
+        return _seen_again(
+            session,
+            root,
+            known,
+            url=canonical,
+            text=text,
+            title=title if "title" not in guessed else None,
+            employer=employer if "employer" not in guessed else None,
+            job_id=job_id,
+            conflict=conflict,
+        )
 
     posting = Posting(
         employer_name=employer,
+        employer_key=employer_key(employer),
         title=title,
+        source_posting_id=job_id,
         url=canonical,
         text=text,
         text_hash=content_hash(text),
@@ -196,7 +330,13 @@ def add(
     _write_posting_file(folder, posting)
     session.commit()
     session.refresh(posting)
-    return Intake(posting=posting, created=True, folder=folder, guessed=tuple(guessed))
+    return Intake(
+        posting=posting,
+        created=True,
+        folder=folder,
+        guessed=tuple(guessed),
+        job_id_conflict=conflict,
+    )
 
 
 def _seen_again(
@@ -208,6 +348,8 @@ def _seen_again(
     text: str,
     title: str | None = None,
     employer: str | None = None,
+    job_id: str | None = None,
+    conflict: str | None = None,
 ) -> Intake:
     """Fold a repeat paste into the row that already exists.
 
@@ -236,7 +378,14 @@ def _seen_again(
         fields.append("title")
     if employer and employer != posting.employer_name:
         posting.employer_name = employer
+        posting.employer_key = employer_key(employer)
         fields.append("employer")
+    # Filling in a job ID that was missing is the case this was asked for. A *different* ID is
+    # left alone: it is the strongest duplicate key, and silently repointing it would merge two
+    # requisitions under one row.
+    if job_id and not posting.source_posting_id:
+        posting.source_posting_id = job_id
+        fields.append("job_id")
     if fields:
         posting.updated_at = posting.last_seen
 
@@ -251,6 +400,7 @@ def _seen_again(
         folder=folder,
         text_changed=changed,
         fields_changed=tuple(fields),
+        job_id_conflict=conflict,
     )
 
 
@@ -294,6 +444,7 @@ def _render_posting_file(posting: Posting) -> str:
         f"# {posting.title}",
         "",
         f"- **Employer:** {posting.employer_name}",
+        f"- **Job ID:** {posting.source_posting_id or '(not recorded)'}",
         f"- **URL:** {posting.url or '(none given)'}",
         f"- **Added:** {posting.first_seen.isoformat(timespec='seconds')}",
         f"- **Source:** {posting.source}",
@@ -305,17 +456,39 @@ def _render_posting_file(posting: Posting) -> str:
     return "\n".join(header) + normalize_text(posting.text) + "\n"
 
 
-def find_by_url_or_hash(session: Session, *, url: str | None, text: str) -> Posting | None:
+def find_existing(
+    session: Session,
+    *,
+    url: str | None,
+    text: str,
+    employer: str | None,
+    job_id: str | None,
+) -> Posting | None:
     """The posting this paste refers to, if it is already known.
 
-    `url` is expected already normalised, because that is what is stored.
+    Three keys, strongest first. **Employer plus the employer's own posting ID** holds when the
+    link has been rewritten and the body edited, which neither of the others survive. **The URL**
+    catches a re-paste of the same link. **The text hash** catches the same posting reached
+    through two different links. `url` is expected already normalised, because that is what is
+    stored.
 
     Queries go through SQLAlchemy's `scalars` rather than SQLModel's own query method, whose name
     collides with the dynamic-execution assertion in `tests/test_safety.py`. That assertion is
     worth more than the idiom, so `scalars` is the convention for every query here.
     """
+    if job_id and employer:
+        by_job_id = session.scalars(
+            select(Posting).where(
+                Posting.employer_key == employer_key(employer),
+                Posting.source_posting_id == job_id,
+            )
+        ).first()
+        if by_job_id:
+            return by_job_id
+
     if url:
-        existing = session.scalars(select(Posting).where(Posting.url == url)).first()
-        if existing:
-            return existing
+        by_url = session.scalars(select(Posting).where(Posting.url == url)).first()
+        if by_url:
+            return by_url
+
     return session.scalars(select(Posting).where(Posting.text_hash == content_hash(text))).first()
